@@ -8,10 +8,9 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.5 2003/01/17 17:13:40 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.6 2003/01/17 18:56:35 bbos Exp $
  */
 
-#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdio.h>
@@ -34,7 +33,6 @@ struct icaltimetype icaltime_as_local(struct icaltimetype tt);
 #define ERR_DATE 3
 #define ERR_PARSE 4
 
-#ifdef HAVE_GETOPT_LONG
 #define USAGE "Usage: ical2html [options] start duration [file]\n\
   -p, --class=CLASS            only (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
   -P, --not-class=CLASS        exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
@@ -45,20 +43,7 @@ struct icaltimetype icaltime_as_local(struct icaltimetype tt);
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
   duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
   file is an iCalendar file, default is standard input\n"
-#else
-#define USAGE "Usage: ical2html [options] start duration [file]\n\
-  -p CLASS     only (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
-  -P CLASS     exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
-  -c CATEGORY  only events of this category\n\
-  -C CATEGORY  exclude events of this category\n\
-  -d           include event's long description in a <PRE>\n\
-  -f TEXT      add text at the bottom of the HTML file\n\
-  start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
-  duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
-  file is an iCalendar file, default is standard input\n"
-#endif /*HAVE_GETOPT_LONG*/
 
-#ifdef HAVE_GETOPT_LONG
 /* Long command line options */
 static struct option options[] = {
   {"class", 1, 0, 'p'},
@@ -69,7 +54,6 @@ static struct option options[] = {
   {"footer", 1, 0, 'f'},
   {0, 0, 0, 0}
 };
-#endif /*HAVE_GETOPT_LONG*/
 
 #define OPTIONS "dp:P:c:C:f:"
 
@@ -407,13 +391,7 @@ int main(int argc, char *argv[])
   icalerrno = 0;
 
   /* Read commandline */
-  while ((c =
-#ifdef HAVE_GETOPT_LONG
-	  getopt_long(argc, argv, OPTIONS, options, NULL)
-#else
-	  getopt(argc, argv, OPTIONS)
-#endif /*HAVE_GETOPT_LONG*/
-	   ) != -1) {
+  while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
     switch (c) {
     case 'p': class = strdup(optarg); break;
     case 'P': not_class = strdup(optarg); break;
