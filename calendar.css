@@ -64,35 +64,15 @@ div.event {
     margin: 0.3em 0;
     padding-left: 0.6em;
     text-indent: -0.6em}
-/*
-div.event { border-left: #CCC 0.5em solid }
-div.Birthday { border-left-color: #F66}
-div.Meeting { border-left-color: #660}
-div.Phone-Call { border-left-color: #606}
-div.Travel { border-left-color: #066}
-div.Miscellaneous { border-left-color: #6C0}
-*/
-/*
-div.event:before {content: "·"; background: #CCC solid}
-div.Birthday:before {content: "·"; background: red}
-div.Meeting:before {content: "·"; background: #660}
-div.Phone-Call:before {content: "·"; background: #606}
-div.Travel:before {content: "·"; background: #066}
-div.Miscellaneous:before {content: "·"; background: #6C0}
-*/
-/*
-div.event {background: #CCC}
-div.Birthday {background: #F66}
-div.Meeting {background: #CC0}
-div.Phone-Call {background: #C0C}
-div.Travel {background: #0CC}
-div.Miscellaneous {background: #FC0}
-*/
 
-div.event {color: #666}
-div.Birthday {color: #C33}
+div.event {color: #666}		/* Default */
+div.Birthday {color: #C66}
+div.Birthday.Personal {color: #C93}
+div.Dinner {color: #090}
+div.Holiday {color: #393}
 div.Meeting {color: #990}
+div.Meeting.Phone-Call {color: #339}
+div.Miscellaneous {color: #960}
+div.Personal {color: #C60}
 div.Phone-Call {color: #909}
 div.Travel {color: #069}
-div.Miscellaneous {color: #960}
-div.Dinner {color: #090}
