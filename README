@@ -1,0 +1,51 @@
+ical2html takes an iCalendar file and outputs an HTML file showing one
+or more months in the form of tables. Requires libical.
+
+    1. Downloading and compiling from CVS
+    2. Command line options
+    3. Style sheet (calendar.css)
+    
+
+
+1) Compiling from CVS
+---------------------
+
+First get the sources, begin by setting up CVS:
+
+    $ CVSROOT=:pserver:anonymous@dev.w3.org:/sources/public
+    $ cvs login
+
+When prompted for a password, enter "anonymous" (without the
+quotes). Then let CVS download the sources:
+
+    $ cvs get Ical2html
+
+Then configure and compile. This requires automake and autoconf to be
+installed:
+
+    $ cd Ical2html
+    $ automake -a
+    $ autoconf
+    $ ./configure
+    $ make
+
+If "configure" complains about "libical", download it from http://softwarestudio.org/libical/ If you have libical already, but "configure" can't find it, try adding CPPFLAGS and LDFLAGS, e.g., like this:
+
+    $ CPPFLAGS=-I/home/bert/include LDFLAGS=/home/bert/lib ./configure
+
+
+2) [Explain ical2html options]
+------------------------------
+
+3) [Explain that the created HTML file links to "calendar.css"]
+---------------------------------------------------------------
+
+[An example "calendar.css" in included]
+
+[Write manual...]
+
+
+
+
+Created: 28 Sep 2002
+Modified: $Date: 2002/09/28 20:41:07 $
