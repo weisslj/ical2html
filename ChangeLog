@@ -1,3 +1,9 @@
+2003-07-31  Bert Bos  <bert@w3.org>
+
+	* icalmerge.c: Mac OS X has no search.h and apparently a broken
+	search() function in libc, so now icalmerge has its own hsearch
+	implementation.
+
 2003-07-30  Bert Bos  <bert@w3.org>
 
 	* icalmerge.c: added icalmerge program to merge icalendar files,
