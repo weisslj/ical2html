@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.1 2003/07/30 09:46:17 bbos Exp $
+ * Version: $Id: icalmerge.c,v 1.2 2003/07/30 13:00:36 bbos Exp $
  */
 
 #include <unistd.h>
@@ -15,14 +15,9 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <ctype.h>
-#ifdef HAVE_SEARCH_H
-#  include <search.h>
-#else
-#  include "search-freebsd.h"
-#endif
 #include <ical.h>
 #include <icalss.h>
-#undef PACKAGE_BUGREPORT	/* Why are there is ical.h? */
+#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
 #undef PACKAGE_NAME
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
@@ -30,8 +25,14 @@
 #undef PACKAGE
 #undef VERSION
 #include "config.h"
+#ifdef HAVE_SEARCH_H
+#  include <search.h>
+#else
+#  include "search-freebsd.h"
+#endif
 
-#define PRODID "-//W3C//NONSGML icalfilter 0.1//EN"
+
+#define PRODID "-//W3C//NONSGML icalmerge " ## VERSION ## "//EN"
 
 #define ERR_OUT_OF_MEM 1	/* Program exit codes */
 #define ERR_USAGE 2
@@ -64,6 +65,18 @@ static void fatal(int errcode, const char *message,...)
 }
 
 
+/* debug -- print message on stderr */
+static void debug(const char *message,...)
+{
+#ifdef DEBUG
+  va_list args;
+  va_start(args, message);
+  vfprintf(stderr, message, args);
+  va_end(args);
+#endif /* DEBUG */
+}
+
+
 /* merge -- add b to a, keeping only newer entries in case of duplicates */
 static void merge(icalcomponent **a, icalcomponent *b)
 {
@@ -71,6 +84,7 @@ static void merge(icalcomponent **a, icalcomponent *b)
   icalcomponent *h, *next;
   icalproperty *mod_a, *mod_b;
   struct icaltimetype modif_a, modif_b;
+  icalproperty *uid;
   ENTRY *e, e1;
 
   /* Create the hash table */
@@ -85,15 +99,18 @@ static void merge(icalcomponent **a, icalcomponent *b)
 
     next = icalcomponent_get_next_component(b, ICAL_VEVENT_COMPONENT);
 
-    e1.key = strdup(icalcomponent_get_uid(h));
+    uid = icalcomponent_get_first_property(h, ICAL_UID_PROPERTY);
+    debug("%s", uid ? icalproperty_get_uid(uid) : "NO UID!?");
+    if (!uid) continue;				/* Error in iCalendar file */
+    e1.key = strdup(icalproperty_get_uid(uid));
     if (! (e = hsearch(e1, FIND))) {
 
       /* New UID, add the VEVENT to the hash and to the set a */
       icalcomponent_remove_component(b, h); /* Move from b... */
       icalcomponent_add_component(*a, h); /* ... to a */
       e1.data = h;
-      if (! (e = hsearch(e1, ENTER)))
-	fatal(ERR_HASH, "%s\n", strerror(errno));
+      if (! (e = hsearch(e1, ENTER))) fatal(ERR_HASH, "%s\n", strerror(errno));
+      debug(" (added)\n");
 
     } else {
 
@@ -109,15 +126,18 @@ static void merge(icalcomponent **a, icalcomponent *b)
 
       if (icaltime_compare(modif_a, modif_b) == -1) {
 	/* a is older than b, so replace it */
-	e1.data = h;
-	if (! (e = hsearch(e1, ENTER)))
-	  fatal(ERR_HASH, "%s\n", strerror(errno));
 	icalcomponent_remove_component(*a, (icalcomponent*)e->data);
 	icalcomponent_remove_component(b, h); /* Move from b... */
 	icalcomponent_add_component(*a, h); /* ... to a */
-      }
+	free(e->key);
+	e1.data = h;
+	if (!(e = hsearch(e1, ENTER))) fatal(ERR_HASH, "%s\n", strerror(errno));
+	debug(" (replaced)\n");
+      } else {
+	free(e1.key);
+	debug(" (ignored)\n");
+      }      
     }
-    free(e1.key);
   }
 }
 
