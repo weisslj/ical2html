@@ -2,8 +2,9 @@ ical2html takes an iCalendar file and outputs an HTML file showing one
 or more months in the form of tables. Requires libical.
 
     1. Downloading and compiling from CVS
-    2. Command line options
-    3. Style sheet (calendar.css)
+    2. Updating to the latest CVS version
+    3. Command line options
+    4. Style sheet (calendar.css)
     
 
 
@@ -13,6 +14,7 @@ or more months in the form of tables. Requires libical.
 First get the sources, begin by setting up CVS:
 
     $ CVSROOT=:pserver:anonymous@dev.w3.org:/sources/public
+    $ export CVSROOT
     $ cvs login
 
 When prompted for a password, enter "anonymous" (without the
@@ -24,6 +26,8 @@ Then configure and compile. This requires automake and autoconf to be
 installed:
 
     $ cd Ical2html
+    $ aclocal
+    $ autoheader
     $ automake -a
     $ autoconf
     $ ./configure
@@ -31,7 +35,25 @@ installed:
 
 If "configure" complains about "libical", download it from http://softwarestudio.org/libical/ If you have libical already, but "configure" can't find it, try adding CPPFLAGS and LDFLAGS, e.g., like this:
 
-    $ CPPFLAGS=-I/home/bert/include LDFLAGS=/home/bert/lib ./configure
+    $ CPPFLAGS=-I/home/bert/include LDFLAGS=-L/home/bert/lib ./configure
+
+If you managed to compile, but the program fails to run with an error
+about "libical.so" not found, try one of the following: (1) either
+uncomment the line with "-static" in Makefile.am and then start again
+from "automake -a" above; or (2) set the variable "LD_LIBRARY_PATH"
+before running ical2html, e.g.:
+
+    $ LD_LIBRARY_PATH=/home/bert/lib ical2html
+
+
+2) Updating to the latest CVS version
+-------------------------------------
+
+If you have a version of ical2html already and want to update it to
+the latest version:
+
+    $ cd Ical2html
+    $ cvs up -d
 
 
 2) [Explain ical2html options]
@@ -48,4 +70,4 @@ If "configure" complains about "libical", download it from http://softwarestudio
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2002/09/28 20:41:07 $
+Modified: $Date: 2002/09/28 20:53:45 $
