@@ -8,7 +8,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.9 2003/07/30 14:28:24 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.10 2003/07/31 15:21:33 bbos Exp $
  */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ struct icaltimetype icaltime_as_local(struct icaltimetype tt);
   -C, --not-category=CATEGORY  exclude events of this category\n\
   -d, --description            include event's long description in a <PRE>\n\
   -f, --footer=TEXT            add text at the bottom of the HTML file\n\
+  -z, --timezone=country/city  adjust for this timezone (default: GMT)\n\
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
   duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
   file is an iCalendar file, default is standard input\n"
@@ -59,10 +60,11 @@ static struct option options[] = {
   {"not-category", 1, 0, 'C'},
   {"description", 0, 0, 'd'},
   {"footer", 1, 0, 'f'},
+  {"timezone", 1, 0, 'z'},
   {0, 0, 0, 0}
 };
 
-#define OPTIONS "dp:P:c:C:f:"
+#define OPTIONS "dp:P:c:C:f:z:"
 
 static const char *months[] = {"", "January", "February", "March", "April",
 			       "May", "June", "July", "August", "September",
@@ -229,25 +231,28 @@ static void print_calendar(const struct icaltimetype start,
 {
   struct icaltimetype day;
   struct icaltimetype end;
+  char s[9];
   int y, m, d, w;
   int i = 0;			/* Loop over events */
 
-  day = icaltime_null_time();
   end = icaltime_add(start, duration);
 
   /* Loop over the years in our period */
   for (y = start.year; y <= end.year; y++) {
-    day.year = y;
 
     /* Loop over the months in this year */
     for (m = (y == start.year ? start.month : 1);
 	 m <= (y == end.year ? end.month : 12); m++) {
-      day.month = m;
+
+      /* Is there a more efficient way to set day than via a string? */
+      sprintf(s, "%04d%02d01", y, m);
+      day = icaltime_from_string(s);
+
       printf("<table><caption>%s %d</caption>\n", months[m], y);
       printf("<thead><tr><th>Sunday<th>Monday<th>Tuesday<th>Wednesday");
       printf("<th>Thursday<th>Friday<th>Saturday\n");
       printf("<tbody>\n");
-      day.day = 1;
+
       w = icaltime_day_of_week(day);
       if (w != 1) {		/* Empty cells until 1st of month */
 	printf("<tr>\n");
@@ -260,7 +265,9 @@ static void print_calendar(const struct icaltimetype start,
 
       /* Loop over the days in this month */
       for (d = 1; d <= icaltime_days_in_month(m, y); d++) {
-	day.day = d;
+
+	sprintf(s, "%04d%02d%02d", y, m, d);
+	day = icaltime_from_string(s);
 	w = icaltime_day_of_week(day);
 	if (w == 1) printf("<tr>\n");
 	printf("<td><p class=date>%d\n\n", d);
@@ -280,16 +287,17 @@ static void print_calendar(const struct icaltimetype start,
 
 /* add_to_queue -- add event to global queue of events to print */
 static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
-			 const struct icaltimetype end)
+			 const struct icaltimetype end,
+			 icaltimezone *tz)
 {
   int n = (nrevents/INC + 1) * INC;
 
   if (!(events = realloc(events, n * sizeof(*events))))
     fatal(ERR_OUT_OF_MEM, "Out of memory\n");
 
-  /* Convert the start and end time to the *local* time zone */
-  events[nrevents].start = icaltime_as_local(start);
-  events[nrevents].end = icaltime_as_local(end);
+
+  events[nrevents].start = icaltime_convert_to_zone(start, tz);
+  events[nrevents].end = icaltime_convert_to_zone(end, tz);
   events[nrevents].event = ev;
   nrevents++;
 }
@@ -299,7 +307,8 @@ static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
 static void iterate(icalcomponent *c, struct icaltimetype periodstart,
 		    struct icaldurationtype duration,
 		    const char *classmask, const char *categorymask,
-		    const char *notclassmask, const char *notcategorymask)
+		    const char *notclassmask, const char *notcategorymask,
+		    icaltimezone *tz)
 {
   const struct icaldurationtype one = {0, 1, 0, 0, 0, 0};
   struct icaltimetype periodend, dtstart, dtend, next, nextend, d;
@@ -353,7 +362,7 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
 	  /* Add to as many days as it spans */
 	  d = dtstart;
 	  do {
-	    add_to_queue(h, d, dtend);
+	    add_to_queue(h, d, dtend, tz);
 	    d = icaltime_add(d, one);
 	  } while (icaltime_compare(d, dtend) < 0);
 	}
@@ -373,7 +382,7 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
 
 	  nextend = icaltime_add(next, dur);
 	  if (icaltime_compare(nextend, periodstart) >= 0)
-	    add_to_queue(h, next, nextend);
+	    add_to_queue(h, next, nextend, tz);
 	}
 
 	/* Clean up */
@@ -396,12 +405,14 @@ int main(int argc, char *argv[])
   char *not_class = NULL, *not_category = NULL;
   char c;
   int do_description = 0;
+  icaltimezone *tz;
 
   /* We handle errors ourselves */
   icalerror_errors_are_fatal = 0;
   icalerrno = 0;
 
   /* Read commandline */
+  tz = icaltimezone_get_utc_timezone();		/* Default */
   while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
     switch (c) {
     case 'p': class = strdup(optarg); break;
@@ -410,6 +421,7 @@ int main(int argc, char *argv[])
     case 'C': not_category = strdup(optarg); break;
     case 'd': do_description = 1; break;
     case 'f': footer = strdup(optarg); break;
+    case 'z': tz = icaltimezone_get_builtin_timezone(optarg); break;
     default: fatal(ERR_USAGE, USAGE);
     }
   }
@@ -439,7 +451,7 @@ int main(int argc, char *argv[])
 
   /* Process the resulting list of components */
   iterate(comp, periodstart, duration,
-	  class, not_class, category, not_category);
+	  class, not_class, category, not_category, tz);
 
   /* Sort the result */
   qsort(events, nrevents, sizeof(*events), compare_events);
