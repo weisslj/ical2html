@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.1 2002/09/28 20:41:07 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.2 2002/09/29 16:05:57 bbos Exp $
  */
 
 #include <stdio.h>
@@ -19,18 +19,20 @@
 
 #define INC 20			/* Used for realloc() */
 
-#define USAGE "Usage: ical2html [options] start end [file]\n\
-  -p, --class=CLASS            PUBLIC, CONFIDENTIAL, PRIVATE, NONE\n\
-  -P, --not-class=CLASS        PUBLIC, CONFIDENTIAL, PRIVATE, NONE\n\
-  -c, --category=CATEGORY      print only events of this category\n\
-  -C, --not-category=CATEGORY  print all but events of this category\n\
-  start and end are of the form yyyymmdd[Thhmmss[Z]]\n"
-
-#define ERR_OUT_OF_MEM 1
+#define ERR_OUT_OF_MEM 1	/* Program exit codes */
 #define ERR_USAGE 2
 #define ERR_DATE 3
 #define ERR_PARSE 4
 
+#define USAGE "Usage: ical2html [options] start duration [file]\n\
+  -p, --class=CLASS            only (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
+  -P, --not-class=CLASS        exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
+  -c, --category=CATEGORY      only events of this category\n\
+  -C, --not-category=CATEGORY  exclude events of this category\n\
+  -d, --description            include event's long description in a <PRE>\n\
+  start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
+  duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
+  file is an iCalendar file, default is standard input\n"
 
 /* Long command line options */
 static struct option options[] = {
@@ -38,8 +40,10 @@ static struct option options[] = {
   {"not-class", 1, 0, 'P'},
   {"category", 1, 0, 'c'},
   {"not-category", 1, 0, 'C'},
+  {"description", 0, 0, 'd'},
   {0, 0, 0, 0}
 };
+#define OPTIONS "dp:P:c:C:"
 
 /* Structure for storing applicable events */
 typedef struct _event_item {
@@ -84,13 +88,15 @@ static char* read_stream(char *s, size_t size, void *d)
 
 
 /* print_header -- print boilerplate at start of output */
-static void print_header(struct icaltimetype start, struct icaltimetype end)
+static void print_header(struct icaltimetype start, struct icaldurationtype dur)
 {
+  struct icaltimetype end = icaltime_add(start, dur);
+
   printf("<!doctype html public \"-//W3C//DTD HTML 4.01//EN\"\n");
   printf("  \"http://www.w3.org/TR/html4/strict.dtd\">\n");
   printf("<meta http-equiv=\"Content-Type\" ");
   printf("content=\"text/html;charset=UTF-8\">\n");
-  printf("<title>Calendar %02d/%02d/%04d -  %02d/%02d/%04d</title>\n",
+  printf("<title>Calendar %02d/%02d/%04d - %02d/%02d/%04d</title>\n",
 	 start.day, start.month, start.year, end.day, end.month, end.year);
   printf("<link rel=stylesheet href=\"calendar.css\">\n\n");
 }
@@ -129,6 +135,7 @@ static void print_escaped(const char *s)
 }
 
 
+#if 0
 /* print_attribute -- printf with &, " and newlines escaped */
 static void print_attribute(const char *s)
 {
@@ -144,10 +151,11 @@ static void print_attribute(const char *s)
     default: putchar(*t);
     }
 }
+#endif
 
 
 /* print_event -- print HTML paragraph for one event */
-static void print_event(const event_item ev)
+static void print_event(const event_item ev, const int do_description)
 {
   icalproperty *p, *q;
 
@@ -175,12 +183,14 @@ static void print_event(const event_item ev)
   if (p) print_escaped(icalproperty_get_summary(p));
   printf("</span>\n");
 
-  /* If there is a description, print it */
-  q = icalcomponent_get_first_property(ev.event, ICAL_DESCRIPTION_PROPERTY);
-  if (q) {
-    printf("<pre class=description>");
-    print_escaped(icalproperty_get_description(q));
-    printf("</pre>\n");
+  /* If we want descriptions and there is one, print it */
+  if (do_description) {
+    q = icalcomponent_get_first_property(ev.event, ICAL_DESCRIPTION_PROPERTY);
+    if (q) {
+      printf("<pre class=description>");
+      print_escaped(icalproperty_get_description(q));
+      printf("</pre>\n");
+    }
   }
 
   printf("</div>\n\n");
@@ -189,15 +199,19 @@ static void print_event(const event_item ev)
 
 /* print_calendar -- print monthly calendars with events */
 static void print_calendar(const struct icaltimetype start,
-			   const struct icaltimetype end,
-			   const int nrevents, const event_item events[])
+			   const struct icaldurationtype duration,
+			   const int nrevents, const event_item events[],
+			   const int do_description)
 {
   static const char *months[] = {"", "January", "February", "March", "April",
 				 "May", "June", "July", "August", "September",
 				 "October", "November", "December"};
   struct icaltimetype day = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
+  struct icaltimetype end;
   int y, m, d, w;
   int i = 0;			/* Loop over events */
+
+  end = icaltime_add(start, duration);
 
   /* Loop over the years in our period */
   for (y = start.year; y <= end.year; y++) {
@@ -232,7 +246,7 @@ static void print_calendar(const struct icaltimetype start,
 	/* Print all events on this day (the events are sorted) */
 	for (; i < nrevents
 	       && icaltime_compare_date_only(events[i].start, day) == 0; i++)
-	  print_event(events[i]);
+	  print_event(events[i], do_description);
       }
 
       printf("</table>\n\n");
@@ -260,12 +274,12 @@ static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
 
 /* iterate -- process each component in the collection */
 static void iterate(icalcomponent *c, struct icaltimetype periodstart,
-		    struct icaltimetype periodend,
+		    struct icaldurationtype duration,
 		    const char *classmask, const char *categorymask,
 		    const char *notclassmask, const char *notcategorymask)
 {
   const struct icaldurationtype one = {0, 1, 0, 0, 0, 0};
-  struct icaltimetype dtstart, dtend, next, nextend, d;
+  struct icaltimetype periodend, dtstart, dtend, next, nextend, d;
   icalcomponent *h; 
   icalproperty *p;
   struct icaldurationtype dur;    
@@ -273,6 +287,8 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
   struct icalrecurrencetype recur;
   icalrecur_iterator *ritr;
   const char *class;
+
+  periodend = icaltime_add(periodstart, duration);
 
   /* Iterate over VEVENTs */
   for (h = icalcomponent_get_first_component(c, ICAL_VEVENT_COMPONENT); h;
@@ -348,22 +364,25 @@ int main(int argc, char *argv[])
   FILE* stream;
   icalcomponent *comp;
   icalparser *parser;
-  struct icaltimetype periodend, periodstart;
+  struct icaltimetype periodstart;
+  struct icaldurationtype duration;
   char *class = NULL, *category = NULL;
   char *not_class = NULL, *not_category = NULL;
   char c;
+  int description = 0;
 
   /* We handle errors ourselves */
   icalerror_errors_are_fatal = 0;
   icalerrno = 0;
 
   /* Read commandline */
-  while ((c = getopt_long(argc, argv, "p:P:c:C:", options, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
     switch (c) {
     case 'p': class = strdup(optarg); break;
     case 'P': not_class = strdup(optarg); break;
     case 'c': category = strdup(optarg); break;
     case 'C': not_category = strdup(optarg); break;
+    case 'd': description = 1; break;
     default: fatal(ERR_USAGE, USAGE);
     }
   }
@@ -373,9 +392,9 @@ int main(int argc, char *argv[])
     fatal(ERR_DATE, "Incorrect date '%s', must be YYYYMMDD.\n", argv[optind]);
   optind++;
   if (optind == argc) fatal(ERR_USAGE, USAGE);
-  periodend = icaltime_from_string(argv[optind]);
+  duration = icaldurationtype_from_string(argv[optind]);
   if (icalerrno)
-    fatal(ERR_DATE, "Incorrect date '%s', must be YYYYMMDD.\n", argv[optind]);
+    fatal(ERR_DATE, "Incorrect duration '%s', must be PnW or PnD.\n", argv[optind]);
   optind++;
   stream = optind == argc ? stdin : fopen(argv[optind], "r");
   if (!stream) {perror(argv[optind]); exit(1);}
@@ -392,15 +411,15 @@ int main(int argc, char *argv[])
     fatal(ERR_PARSE, "Parse error: %s\n", icalerror_strerror(icalerrno));
 
   /* Process the resulting list of components */
-  iterate(comp, periodstart, periodend,
+  iterate(comp, periodstart, duration,
 	  class, not_class, category, not_category);
 
   /* Sort the result */
   qsort(events, nrevents, sizeof(*events), compare_events);
 
   /* Print the sorted results */
-  print_header(periodstart, periodend);
-  print_calendar(periodstart, periodend, nrevents, events);
+  print_header(periodstart, duration);
+  print_calendar(periodstart, duration, nrevents, events, description);
   print_footer();
 
   /* Clean up */
