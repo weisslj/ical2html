@@ -48,17 +48,20 @@ installed:
     $ ./configure
     $ make
 
-If "configure" complains about "libical", download it from http://softwarestudio.org/libical/ If you have libical already, but "configure" can't find it, try adding CPPFLAGS and LDFLAGS, e.g., like this:
+If "configure" complains about "libical", download it from
+http://softwarestudio.org/libical/ or
+http://sourceforge.net/projects/freeassociation/. Ical2html was
+developed with libical version 0.24.RC4. If you have libical already,
+but "configure" can't find it in the usual directories, try adding
+explicit CPPFLAGS and LDFLAGS, e.g., like this:
 
-    $ CPPFLAGS=-I/home/bert/include LDFLAGS=-L/home/bert/lib ./configure
+    $ CPPFLAGS=-I/path/to/include/ LDFLAGS=-L/path/to/lib/ ./configure
 
 If you managed to compile, but the program fails to run with an error
-about "libical.so" not found, try one of the following: (1) either
-uncomment the line with "-static" in Makefile.am and then start again
-from "automake -a" above; or (2) set the variable "LD_LIBRARY_PATH"
-before running ical2html, e.g.:
+about "libical.so" not found, try to set the variable
+"LD_LIBRARY_PATH" before running ical2html, e.g.:
 
-    $ LD_LIBRARY_PATH=/home/bert/lib ical2html
+    $ LD_LIBRARY_PATH=/path/to/lib ical2html
 
 
 2) Updating to the latest CVS version
@@ -68,13 +71,15 @@ If you have a version of ical2html already and want to update it to
 the latest version:
 
     $ cd Ical2html
-    $ cvs up -d
+    $ cvs -d :pserver:anonymous@dev.w3.org:/sources/public update
+
+If you are asked for a password, answer "anonymous"
 
 
-2) [Explain ical2html options]
+3) [Explain ical2html options]
 ------------------------------
 
-3) [Explain that the created HTML file links to "calendar.css"]
+4) [Explain that the created HTML file links to "calendar.css"]
 ---------------------------------------------------------------
 
 [An example "calendar.css" in included]
@@ -85,4 +90,4 @@ the latest version:
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2003/07/30 22:55:47 $
+Modified: $Date: 2003/07/30 23:15:02 $
