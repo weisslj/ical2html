@@ -8,7 +8,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.7 2003/05/01 18:18:53 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.8 2003/07/08 22:56:52 bbos Exp $
  */
 
 #include <stdio.h>
@@ -122,7 +122,7 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur)
 /* print_footer -- print boilerplate at end of output */
 static void print_footer(const char *footer)
 {
-  printf("%s\n", footer);
+  if (footer) printf("%s\n", footer);
 }
 
 
@@ -312,7 +312,7 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
     /* Check if the event is of the right class (unless we accept all) */
     if (classmask || notclassmask) {
       p = icalcomponent_get_first_property(h, ICAL_CLASS_PROPERTY);
-      class = p ? icalproperty_get_class(p) : "NONE";
+      class = p ? icalproperty_get_value_as_string(p) : "NONE";
       if (classmask && strcasecmp(classmask, class) != 0) continue;
       if (notclassmask && strcasecmp(notclassmask, class) == 0) continue;
     }
