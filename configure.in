@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([ical2html],[0.3],[bert@w3.org])
+AC_INIT([ical2html],[0.5],[bert@w3.org])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([ical2html.c])
 AM_CONFIG_HEADER(config.h)
@@ -49,7 +49,7 @@ AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please in
 AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"), $PTHREAD_LIBS)
 
 # Libical v 0.23 is missing icaltime_as_local
-AC_REPLACE_FUNCS([icaltime_as_local])
+#AC_REPLACE_FUNCS([icaltime_as_local])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
