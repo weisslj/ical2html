@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalfilter.c,v 1.4 2003/05/01 18:20:23 bbos Exp $
+ * Version: $Id: icalfilter.c,v 1.5 2003/07/30 22:17:27 bbos Exp $
  */
 
 #include <unistd.h>
@@ -17,6 +17,13 @@
 #include <ctype.h>
 #include <ical.h>
 #include <icalss.h>
+#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+#undef PACKAGE
+#undef VERSION
 #include "config.h"
 
 #define PRODID "-//W3C//NONSGML icalfilter 0.1//EN"
@@ -83,7 +90,7 @@ int main(int argc, char *argv[])
   char *notclassmask = NULL, *notcategorymask = NULL;
   char c;
   const char *class;
-  icalfileset *out;
+  icalset *out;
   icalcomponent *h, *next, *newset;
   icalproperty *p;
 
@@ -142,7 +149,8 @@ int main(int argc, char *argv[])
     /* Check if the event is of the right class (unless we accept all) */
     if (classmask || notclassmask) {
       p = icalcomponent_get_first_property(h, ICAL_CLASS_PROPERTY);
-      class = p ? icalproperty_get_class(p) : "NONE";
+      class = p ? icalparameter_enum_to_string(icalproperty_get_class(p))
+	: "NONE";
       if (classmask && strcasecmp(classmask, class) != 0) continue;
       if (notclassmask && strcasecmp(notclassmask, class) == 0) continue;
     }
