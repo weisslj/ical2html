@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalfilter.c,v 1.5 2003/07/30 22:17:27 bbos Exp $
+ * Version: $Id: icalfilter.c,v 1.6 2003/07/31 15:21:52 bbos Exp $
  */
 
 #include <unistd.h>
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     /* Check if the event is of the right class (unless we accept all) */
     if (classmask || notclassmask) {
       p = icalcomponent_get_first_property(h, ICAL_CLASS_PROPERTY);
-      class = p ? icalparameter_enum_to_string(icalproperty_get_class(p))
+      class = p ? icalvalue_as_ical_string(icalproperty_get_value(p))
 	: "NONE";
       if (classmask && strcasecmp(classmask, class) != 0) continue;
       if (notclassmask && strcasecmp(notclassmask, class) == 0) continue;
