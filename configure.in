@@ -9,11 +9,30 @@ AC_PROG_CC
 
 # Checks for libraries.
 
+# Check if this system can use pthreads (test below copied from libical 0.24)
+# HACK to support FreeBSD 4.x pthread
+
+case "${host}" in 
+        *-*-freebsdelf4* )
+		AC_MSG_RESULT(checking for pthread_create in -lpthread... -pthread (FreeBSD 4.x style))
+		AC_DEFINE(HAVE_PTHREAD, ,[Define if we have pthread.])
+		PTHREAD_LIBS=-pthread;;
+
+	*)
+	AC_CHECK_LIB(pthread,pthread_create,have_pthread=yes)
+	if test "x$have_pthread" = xyes; then
+	   AC_DEFINE(HAVE_PTHREAD, ,[Define if we have pthread.])
+	   PTHREAD_LIBS=-lpthread
+	fi;;
+esac
+
+AM_CONDITIONAL(HAVE_PTHREAD, test "$have_pthread" = "yes")
+AC_SUBST(PTHREAD_LIBS)
+
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h search.h libintl.h wchar.h])
-AC_CHECK_HEADER(ical.h,,AC_MSG_ERROR("Cannot find ical.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
-AC_CHECK_HEADER(icalss.h,,AC_MSG_ERROR("Cannot find icalss.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"),[#include <ical.h>])
+AC_CHECK_HEADERS([stdlib.h string.h search.h libintl.h wchar.h pthread.h])
+AC_CHECK_HEADERS([ical.h icalss.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -26,8 +45,8 @@ AC_STRUCT_TM
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strcasecmp strdup memset strerror)
 AC_CHECK_FUNCS(getopt_long,,AC_LIBOBJ(getopt) AC_LIBOBJ(getopt1))
-AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
-AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
+AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"), $PTHREAD_LIBS)
+AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"), $PTHREAD_LIBS)
 
 # Libical v 0.23 is missing icaltime_as_local
 AC_REPLACE_FUNCS([icaltime_as_local])
