@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.4 2003/07/30 22:19:06 bbos Exp $
+ * Version: $Id: icalmerge.c,v 1.5 2003/11/13 22:28:07 bbos Exp $
  */
 
 #include <unistd.h>
@@ -27,7 +27,7 @@
 #include "config.h"
 
 
-#define PRODID "-//W3C//NONSGML icalmerge " ## VERSION ## "//EN"
+#define PRODID "-//W3C//NONSGML icalmerge " VERSION "//EN"
 
 #define ERR_OUT_OF_MEM 1	/* Program exit codes */
 #define ERR_USAGE 2
