@@ -8,7 +8,6 @@ AM_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
-AC_LIBOBJ
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -25,6 +24,9 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strcasecmp strdup])
 AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
+
+# Libical v 0.23 is missing icaltime_as_local
+AC_REPLACE_FUNCS([icaltime_as_local])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

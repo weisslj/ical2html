@@ -1,9 +1,14 @@
 /*
  * ical2html -- create an HTML table from icalendar data
  *
+ * Makes a calendar for the *local* time zone. You can change what is
+ * "local" by setting the TZ environment variable, e.g.,
+ *
+ *     export TZ=Europe/Paris
+ *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.3 2002/10/01 12:11:10 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.4 2002/12/18 14:47:10 bbos Exp $
  */
 
 #include <stdio.h>
@@ -16,6 +21,10 @@
 #include <ctype.h>
 #include <ical.h>
 #include "config.h"
+
+#if !HAVE_icaltime_as_local
+struct icaltimetype icaltime_as_local(struct icaltimetype tt);
+#endif
 
 #define INC 20			/* Used for realloc() */
 
@@ -46,6 +55,10 @@ static struct option options[] = {
   {0, 0, 0, 0}
 };
 #define OPTIONS "dp:P:c:C:f:"
+
+static const char *months[] = {"", "January", "February", "March", "April",
+			       "May", "June", "July", "August", "September",
+			       "October", "November", "December"};
 
 /* Structure for storing applicable events */
 typedef struct _event_item {
@@ -98,8 +111,9 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur)
   printf("  \"http://www.w3.org/TR/html4/strict.dtd\">\n");
   printf("<meta http-equiv=\"Content-Type\" ");
   printf("content=\"text/html;charset=UTF-8\">\n");
-  printf("<title>Calendar %02d/%02d/%04d - %02d/%02d/%04d</title>\n",
-	 start.day, start.month, start.year, end.day, end.month, end.year);
+  printf("<title>Calendar %d %s %d - %d %s %d</title>\n",
+	 start.day, months[start.month], start.year,
+	 end.day, months[end.month], end.year);
   printf("<link rel=stylesheet href=\"calendar.css\">\n\n");
 }
 
@@ -205,9 +219,6 @@ static void print_calendar(const struct icaltimetype start,
 			   const int nrevents, const event_item events[],
 			   const int do_description)
 {
-  static const char *months[] = {"", "January", "February", "March", "April",
-				 "May", "June", "July", "August", "September",
-				 "October", "November", "December"};
   struct icaltimetype day = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
   struct icaltimetype end;
   int y, m, d, w;
@@ -267,8 +278,9 @@ static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
   if (!(events = realloc(events, n * sizeof(*events))))
     fatal(ERR_OUT_OF_MEM, "Out of memory\n");
 
-  events[nrevents].start = start;
-  events[nrevents].end = end;
+  /* Convert the start and end time to the *local* time zone */
+  events[nrevents].start = icaltime_as_local(start);
+  events[nrevents].end = icaltime_as_local(end);
   events[nrevents].event = ev;
   nrevents++;
 }
