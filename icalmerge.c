@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.2 2003/07/30 13:00:36 bbos Exp $
+ * Version: $Id: icalmerge.c,v 1.3 2003/07/30 15:37:06 bbos Exp $
  */
 
 #include <unistd.h>
@@ -110,11 +110,12 @@ static void merge(icalcomponent **a, icalcomponent *b)
       icalcomponent_add_component(*a, h); /* ... to a */
       e1.data = h;
       if (! (e = hsearch(e1, ENTER))) fatal(ERR_HASH, "%s\n", strerror(errno));
-      debug(" (added)\n");
+      debug(" (added %lx)\n", h);
 
     } else {
 
       /* Already an entry with this UID, compare modified dates */
+      debug(" (found %lx", e->data);
       mod_a = icalcomponent_get_first_property((icalcomponent*)e->data,
 					       ICAL_LASTMODIFIED_PROPERTY);
       if (!mod_a) continue;	/* Hmmm... */
@@ -129,14 +130,12 @@ static void merge(icalcomponent **a, icalcomponent *b)
 	icalcomponent_remove_component(*a, (icalcomponent*)e->data);
 	icalcomponent_remove_component(b, h); /* Move from b... */
 	icalcomponent_add_component(*a, h); /* ... to a */
-	free(e->key);
-	e1.data = h;
-	if (!(e = hsearch(e1, ENTER))) fatal(ERR_HASH, "%s\n", strerror(errno));
-	debug(" (replaced)\n");
+	e->data = h;
+	debug(" replaced)\n");
       } else {
-	free(e1.key);
-	debug(" (ignored)\n");
+	debug(" ignored)\n");
       }      
+      free(e1.key);
     }
   }
 }
