@@ -11,7 +11,7 @@ AC_PROG_CC
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h])
+AC_CHECK_HEADERS([stdlib.h string.h search.h libintl.h wchar.h])
 AC_CHECK_HEADER(ical.h,,AC_MSG_ERROR("Cannot find ical.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 AC_CHECK_HEADER(icalss.h,,AC_MSG_ERROR("Cannot find icalss.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"),[#include <ical.h>])
 
@@ -20,8 +20,11 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_STRUCT_TM
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(strcasecmp strdup)
+AC_CHECK_FUNCS(strcasecmp strdup memset strerror)
 AC_CHECK_FUNCS(getopt_long,,AC_LIBOBJ(getopt) AC_LIBOBJ(getopt1))
 AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
