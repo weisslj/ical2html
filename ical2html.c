@@ -8,7 +8,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.6 2003/01/17 18:56:35 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.7 2003/05/01 18:18:53 bbos Exp $
  */
 
 #include <stdio.h>
@@ -343,8 +343,11 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
 	if (icaltime_compare(periodstart, dtend) <= 0) {
 
 	  /* Add to as many days as it spans */
-	  for (d = dtstart; icaltime_compare(d, dtend) <= 0;
-	       d = icaltime_add(d, one)) add_to_queue(h, d, dtend);
+	  d = dtstart;
+	  do {
+	    add_to_queue(h, d, dtend);
+	    d = icaltime_add(d, one);
+	  } while (icaltime_compare(d, dtend) < 0);
 	}
       }
 
