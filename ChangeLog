@@ -1,5 +1,17 @@
 2003-07-31  Bert Bos  <bert@w3.org>
 
+	* Released version 0.4
+
+	* ical2html.c: There is no routine for making an icaltime from a
+	year, month and date and writing to the struct is not safe, so now
+	it constructs an icaltime by creating a string YYYYMMDD and
+	parsing it. It's still fast enough. Also added option --timezone,
+	since libical doesn't look at the TZ environment variable.
+
+	* icalfilter.c: Used a different routine from libical to get class
+	converted to a string, the old one was apparently not the correct
+	one to use, since it returned NULL.
+
 	* icalmerge.c: Mac OS X has no search.h and apparently a broken
 	search() function in libc, so now icalmerge has its own hsearch
 	implementation.
