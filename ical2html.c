@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.2 2002/09/29 16:05:57 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.3 2002/10/01 12:11:10 bbos Exp $
  */
 
 #include <stdio.h>
@@ -30,6 +30,7 @@
   -c, --category=CATEGORY      only events of this category\n\
   -C, --not-category=CATEGORY  exclude events of this category\n\
   -d, --description            include event's long description in a <PRE>\n\
+  -f, --footer=TEXT            add text at the bottom of the HTML file\n\
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
   duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
   file is an iCalendar file, default is standard input\n"
@@ -41,9 +42,10 @@ static struct option options[] = {
   {"category", 1, 0, 'c'},
   {"not-category", 1, 0, 'C'},
   {"description", 0, 0, 'd'},
+  {"footer", 1, 0, 'f'},
   {0, 0, 0, 0}
 };
-#define OPTIONS "dp:P:c:C:"
+#define OPTIONS "dp:P:c:C:f:"
 
 /* Structure for storing applicable events */
 typedef struct _event_item {
@@ -103,9 +105,9 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur)
 
 
 /* print_footer -- print boilerplate at end of output */
-static void print_footer(void)
+static void print_footer(const char *footer)
 {
-  /* Point to documentation, ics file, generation date... */
+  printf("%s\n", footer);
 }
 
 
@@ -366,10 +368,10 @@ int main(int argc, char *argv[])
   icalparser *parser;
   struct icaltimetype periodstart;
   struct icaldurationtype duration;
-  char *class = NULL, *category = NULL;
+  char *footer = NULL, *class = NULL, *category = NULL;
   char *not_class = NULL, *not_category = NULL;
   char c;
-  int description = 0;
+  int do_description = 0;
 
   /* We handle errors ourselves */
   icalerror_errors_are_fatal = 0;
@@ -382,7 +384,8 @@ int main(int argc, char *argv[])
     case 'P': not_class = strdup(optarg); break;
     case 'c': category = strdup(optarg); break;
     case 'C': not_category = strdup(optarg); break;
-    case 'd': description = 1; break;
+    case 'd': do_description = 1; break;
+    case 'f': footer = strdup(optarg); break;
     default: fatal(ERR_USAGE, USAGE);
     }
   }
@@ -419,8 +422,8 @@ int main(int argc, char *argv[])
 
   /* Print the sorted results */
   print_header(periodstart, duration);
-  print_calendar(periodstart, duration, nrevents, events, description);
-  print_footer();
+  print_calendar(periodstart, duration, nrevents, events, do_description);
+  print_footer(footer);
 
   /* Clean up */
   icalcomponent_free(comp);
