@@ -8,7 +8,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.8 2003/07/08 22:56:52 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.9 2003/07/30 14:28:24 bbos Exp $
  */
 
 #include <stdio.h>
@@ -20,6 +20,13 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <ical.h>
+#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+#undef PACKAGE
+#undef VERSION
 #include "config.h"
 
 #if !HAVE_icaltime_as_local
@@ -220,11 +227,12 @@ static void print_calendar(const struct icaltimetype start,
 			   const int nrevents, const event_item events[],
 			   const int do_description)
 {
-  struct icaltimetype day = {0, 0, 0, 0, 0, 0, 0, 0, NULL};
+  struct icaltimetype day;
   struct icaltimetype end;
   int y, m, d, w;
   int i = 0;			/* Loop over events */
 
+  day = icaltime_null_time();
   end = icaltime_add(start, duration);
 
   /* Loop over the years in our period */

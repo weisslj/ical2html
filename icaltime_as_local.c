@@ -4,11 +4,18 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 18 Dec 2002
- * Version: $Id: icaltime_as_local.c,v 1.1 2002/12/18 14:47:52 bbos Exp $
+ * Version: $Id: icaltime_as_local.c,v 1.2 2003/07/30 14:28:49 bbos Exp $
  */
 
 #include <time.h>
 #include <ical.h>
+#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+#undef PACKAGE
+#undef VERSION
 #include "config.h"
 
 
