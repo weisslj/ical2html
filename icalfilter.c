@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalfilter.c,v 1.3 2003/01/17 18:56:43 bbos Exp $
+ * Version: $Id: icalfilter.c,v 1.4 2003/05/01 18:20:23 bbos Exp $
  */
 
 #include <unistd.h>
@@ -104,14 +104,14 @@ int main(int argc, char *argv[])
   /* Get input file name */
   if (optind == argc) fatal(ERR_USAGE, USAGE);
   stream = optind == argc ? stdin : fopen(argv[optind], "r");
-  if (!stream) fatal(ERR_FILEIO, "%s: %s\n", argv[optind], sys_errlist[errno]);
+  if (!stream) fatal(ERR_FILEIO, "%s: %s\n", argv[optind], strerror(errno));
   optind++;
 
   /* Get output file name */
   if (optind == argc) fatal(ERR_USAGE, USAGE);
   (void) unlink(argv[optind]);	/* Remove output file if it already exists */
   out = icalfileset_new(argv[optind]);
-  if (!out) fatal(ERR_FILEIO, "%s: %s\n", argv[optind], sys_errlist[errno]);
+  if (!out) fatal(ERR_FILEIO, "%s: %s\n", argv[optind], strerror(errno));
 
   /* Should have no more arguments */
   if (optind + 1 != argc) fatal(ERR_USAGE, USAGE);
