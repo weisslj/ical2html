@@ -21,7 +21,8 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([strcasecmp strdup getopt_long])
+AC_CHECK_FUNCS(strcasecmp strdup)
+AC_CHECK_FUNCS(getopt_long,,AC_LIBOBJ(getopt) AC_LIBOBJ(getopt1))
 AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 
