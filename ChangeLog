@@ -1,3 +1,11 @@
+2003-05-01  Bert Bos  <bert@bert>
+
+	* icalfilter.c: now uses strerror() instead of sys_errlist, since
+	gcc3 says the latter is deprecated.
+
+	* ical2html.c: now stops *before* the end time instead of on it,
+	because a full-day event may end on 00:00 of the next day.
+
 2003-01-17  Bert Bos  <bert@w3.org>
 
 	* Added copies of GNU getopt.c, getopt1.c and getopt.h to the
