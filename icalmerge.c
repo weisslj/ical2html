@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.3 2003/07/30 15:37:06 bbos Exp $
+ * Version: $Id: icalmerge.c,v 1.4 2003/07/30 22:19:06 bbos Exp $
  */
 
 #include <unistd.h>
@@ -25,11 +25,6 @@
 #undef PACKAGE
 #undef VERSION
 #include "config.h"
-#ifdef HAVE_SEARCH_H
-#  include <search.h>
-#else
-#  include "search-freebsd.h"
-#endif
 
 
 #define PRODID "-//W3C//NONSGML icalmerge " ## VERSION ## "//EN"
@@ -77,6 +72,112 @@ static void debug(const char *message,...)
 }
 
 
+#ifdef HAVE_SEARCH_H
+#  include <search.h>
+#else
+/*
+ * hsearch() on Mac OS X 10.1.2 appears to be broken: there is no
+ * search.h, there is a search() in the C library, but it doesn't work
+ * properly. We include some hash functions here, protected by
+ * HAVE_SEARCH_H. Hopefully when search.h appears in Mac OS X,
+ * hsearch() will be fixed at the same time...
+ */
+
+typedef struct entry {char *key; void *data;} ENTRY;
+typedef enum {FIND, ENTER} ACTION;
+
+static ENTRY *htab;
+static int *htab_index1, *htab_index2;
+static unsigned int htab_size = 0;
+static unsigned int htab_inited;
+
+
+/* isprime -- test if n is a prime number */
+static int isprime(unsigned int n)
+{
+  /* Simplistic algorithm, probably good enough for now */
+  unsigned int i;
+  assert(n % 2);				/* n not even */
+  for (i = 3; i * i < n; i += 2) if (n % i == 0) return 0;
+  return 1;
+}
+
+
+/* hcreate -- create a hash table for at least nel entries */
+static int hcreate(size_t nel)
+{
+  /* Change nel to next higher prime */
+  for (nel |= 1; !isprime(nel); nel += 2) ;
+
+  /* Allocate hash table and array to keep track of initialized entries */
+  if (! (htab = malloc(nel * sizeof(*htab)))) return 0;
+  if (! (htab_index1 = malloc(nel * sizeof(*htab_index1)))) return 0;
+  if (! (htab_index2 = malloc(nel * sizeof(*htab_index2)))) return 0;
+  htab_inited = 0;
+  htab_size = nel;
+
+  return 1;
+}
+
+
+/* hdestroy -- deallocate hash table */
+static void hdestroy(void)
+{
+  assert(htab_size);
+  free(htab_index1);
+  free(htab_index2);
+  free(htab);
+  htab_size = 0;
+}
+
+
+/* hsearch -- search for and/or insert an entry in the hash table */
+static ENTRY *hsearch(ENTRY item, ACTION action)
+{
+  unsigned int hval, i;
+  char *p;
+
+  assert(htab_size);				/* There must be a hash table */
+
+  /* Compute a hash value */
+#if 1
+  /* This function suggested by Dan Bernstein */
+  for (hval = 5381, p = item.key; *p; p++) hval = (hval * 33) ^ *p;
+#else
+  i = hval = strlen(item.key);
+  do {i--; hval = (hval << 1) + item.key[i];} while (i > 0);
+#endif
+  hval %= htab_size;
+  /* if (action == ENTER) debug("%d\n", hval); */
+
+  /* Look for either an empty slot or an entry with the wanted key */
+  i = hval;
+  while (htab_index1[i] < htab_inited
+	 && htab_index2[htab_index1[i]] == i
+	 && strcmp(htab[i].key, item.key) != 0) {
+    i = (i + 1) % htab_size;			/* "Open" hash method */
+    if (i == hval) return NULL;			/* Made full round */
+  }
+  /* Now we either have an empty slot or an entry with the same key */
+  if (action == ENTER) {
+    htab[i].key = item.key;			/* Put the item in this slot */
+    htab[i].data = item.data;
+    if (htab_index1[i] >= htab_inited || htab_index2[htab_index1[i]] != i) {
+      /* Item was not yet used, mark it as used */
+      htab_index1[i] = htab_inited;
+      htab_index2[htab_inited] = i;
+      htab_inited++;
+    }
+    return &htab[i];
+  } else if (htab_index1[i] < htab_inited && htab_index2[htab_index1[i]] == i)
+    return &htab[i];				/* action == FIND, found key */
+
+  return NULL;					/* Found empty slot */
+}
+
+#endif /* HAVE_SEARCH_H */
+
+
 /* merge -- add b to a, keeping only newer entries in case of duplicates */
 static void merge(icalcomponent **a, icalcomponent *b)
 {
@@ -89,7 +190,7 @@ static void merge(icalcomponent **a, icalcomponent *b)
 
   /* Create the hash table */
   if (first_time) {
-    if (! hcreate(2000)) fatal(ERR_HASH, "%s\n", strerror(errno));
+    if (! hcreate(10000)) fatal(ERR_HASH, "%s\n", strerror(errno));
     first_time = 0;
   }
 
@@ -100,7 +201,7 @@ static void merge(icalcomponent **a, icalcomponent *b)
     next = icalcomponent_get_next_component(b, ICAL_VEVENT_COMPONENT);
 
     uid = icalcomponent_get_first_property(h, ICAL_UID_PROPERTY);
-    debug("%s", uid ? icalproperty_get_uid(uid) : "NO UID!?");
+    /*debug("%s", uid ? icalproperty_get_uid(uid) : "NO UID!?");*/
     if (!uid) continue;				/* Error in iCalendar file */
     e1.key = strdup(icalproperty_get_uid(uid));
     if (! (e = hsearch(e1, FIND))) {
@@ -109,13 +210,14 @@ static void merge(icalcomponent **a, icalcomponent *b)
       icalcomponent_remove_component(b, h); /* Move from b... */
       icalcomponent_add_component(*a, h); /* ... to a */
       e1.data = h;
-      if (! (e = hsearch(e1, ENTER))) fatal(ERR_HASH, "%s\n", strerror(errno));
-      debug(" (added %lx)\n", h);
+      if (! (e = hsearch(e1, ENTER)))
+	fatal(ERR_OUT_OF_MEM, "No room in hash table\n");
+      /*debug(" (added %lx)\n", h);*/
 
     } else {
 
       /* Already an entry with this UID, compare modified dates */
-      debug(" (found %lx", e->data);
+      /*debug(" (found %lx", e->data);*/
       mod_a = icalcomponent_get_first_property((icalcomponent*)e->data,
 					       ICAL_LASTMODIFIED_PROPERTY);
       if (!mod_a) continue;	/* Hmmm... */
@@ -131,9 +233,9 @@ static void merge(icalcomponent **a, icalcomponent *b)
 	icalcomponent_remove_component(b, h); /* Move from b... */
 	icalcomponent_add_component(*a, h); /* ... to a */
 	e->data = h;
-	debug(" replaced)\n");
+	/*debug(" replaced)\n");*/
       } else {
-	debug(" ignored)\n");
+	/*debug(" ignored)\n");*/
       }      
       free(e1.key);
     }
