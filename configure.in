@@ -13,7 +13,8 @@ AC_LIBOBJ
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h string.h])
-AC_CHECK_HEADERS(ical.h,,AC_MSG_ERROR("Cannot find ical.h. Please install libical or set LDFLAGS=-L<path-to-libical>. See http://softwarestudio.org/libical/"))
+AC_CHECK_HEADER(ical.h,,AC_MSG_ERROR("Cannot find ical.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
+AC_CHECK_HEADER(icalss.h,,AC_MSG_ERROR("Cannot find icalss.h. Please install libical or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"),[#include <ical.h>])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -22,7 +23,8 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strcasecmp strdup])
-AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set LDFLAGS=-L<path-to-libical>. See http://softwarestudio.org/libical/"))
+AC_CHECK_LIB(ical,icaltime_compare,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
+AC_CHECK_LIB(icalss,icalfileset_new,,AC_MSG_ERROR("Cannot find libical. Please install it or set CPPFLAGS=-I<path-to-libical>. See http://softwarestudio.org/libical/"))
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
