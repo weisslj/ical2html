@@ -1,3 +1,10 @@
+2003-07-09  Bert Bos  <bert@w3.org>
+
+	* ical2html.c: fixed a NULL pointer bug; replaced a wrong function
+	call (needed the class as a string, not as an int)
+
+	* Makefile.am: removed -static, since Mac OS X doesn't like it.
+
 2003-05-01  Bert Bos  <bert@bert>
 
 	* icalfilter.c: now uses strerror() instead of sys_errlist, since
