@@ -32,7 +32,12 @@ AC_SUBST(PTHREAD_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h string.h search.h libintl.h wchar.h pthread.h])
-AC_CHECK_HEADERS([ical.h icalss.h])
+AC_CHECK_HEADERS([ical.h])
+AC_CHECK_HEADERS([icalss.h], [], [],
+[#if HAVE_ICAL_H
+# include <ical.h>
+# endif
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
