@@ -1,11 +1,26 @@
 ical2html takes an iCalendar file and outputs an HTML file showing one
 or more months in the form of tables. Requires libical.
 
+    0. Compiling from source
     1. Downloading and compiling from CVS
     2. Updating to the latest CVS version
     3. Command line options
     4. Style sheet (calendar.css)
     
+
+
+0) Compiling from source
+------------------------
+
+Download and unpack the ical2html-XXX.tar.gz file (where XXX is the
+version number), go into the ical2html-XXX directory and type:
+
+    $ ./configure
+    $ make
+
+You may want to run ./configure --help first, to see what options are
+available. Or read INSTALL for general information about the configure
+process.
 
 
 1) Compiling from CVS
@@ -70,4 +85,4 @@ the latest version:
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2002/09/28 20:53:45 $
+Modified: $Date: 2003/01/17 20:08:59 $
