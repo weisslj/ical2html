@@ -9,3 +9,5 @@ icalfilter_LDFLAGS = -static
 icalfilter_LDADD = @LIBOBJS@
 
 dist_data_DATA = calendar.css
+
+EXTRA_DIST = getopt.h
