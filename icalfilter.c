@@ -3,7 +3,7 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalfilter.c,v 1.1 2002/09/30 01:15:36 bbos Exp $
+ * Version: $Id: icalfilter.c,v 1.2 2003/01/17 17:13:40 bbos Exp $
  */
 
 #include <unistd.h>
@@ -28,13 +28,23 @@
 #define ERR_FILEIO 5
 #define ERR_ICAL_ERR 6		/* Other error */
 
+#ifdef HAVE_GETOPT_LONG
 #define USAGE "Usage: ical2html [options] input output\n\
   -p, --class=CLASS            only (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
   -P, --not-class=CLASS        exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
   -c, --category=CATEGORY      only events of this category\n\
   -C, --not-category=CATEGORY  exclude events of this category\n\
   input and output are iCalendar files\n"
+#else
+#define USAGE "Usage: ical2html [options] input output\n\
+  -p CLASS     only (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
+  -P CLASS     exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
+  -c CATEGORY  only events of this category\n\
+  -C CATEGORY  exclude events of this category\n\
+  input and output are iCalendar files\n"
+#endif /*HAVE_GETOPT_LONG*/
 
+#ifdef HAVE_GETOPT_LONG
 /* Long command line options */
 static struct option options[] = {
   {"class", 1, 0, 'p'},
@@ -43,6 +53,8 @@ static struct option options[] = {
   {"not-category", 1, 0, 'C'},
   {0, 0, 0, 0}
 };
+#endif /*HAVE_GETOPT_LONG*/
+
 #define OPTIONS "p:P:c:C:"
 
 /* Structure for storing applicable events */
@@ -91,7 +103,13 @@ int main(int argc, char *argv[])
   icalerrno = 0;
 
   /* Read commandline */
-  while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
+  while ((c =
+#ifdef HAVE_GETOPT_LONG
+	  getopt_long(argc, argv, OPTIONS, options, NULL)
+#else
+	  getopt(argc, argv, OPTIONS)
+#endif /*HAVE_GETOPT_LONG*/
+	   ) != -1) {
     switch (c) {
     case 'p': classmask = strdup(optarg); break;
     case 'P': notclassmask = strdup(optarg); break;
