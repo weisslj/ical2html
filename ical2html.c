@@ -8,30 +8,24 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.10 2003/07/31 15:21:33 bbos Exp $
+ * Version: $Id: ical2html.c,v 1.11 2009/02/22 21:09:27 bbos Exp $
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <getopt.h>
 #include <ctype.h>
-#include <ical.h>
-#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#undef PACKAGE
-#undef VERSION
-#include "config.h"
-
-#if !HAVE_icaltime_as_local
-struct icaltimetype icaltime_as_local(struct icaltimetype tt);
-#endif
+#include <libical/icaltime.h>
+#include <libical/icalcomponent.h>
+#include <libical/icalparser.h>
+#include <libical/icalerror.h>
+#include <libical/icaltimezone.h>
 
 #define INC 20			/* Used for realloc() */
 
@@ -183,25 +177,51 @@ static void print_attribute(const char *s)
 /* print_event -- print HTML paragraph for one event */
 static void print_event(const event_item ev, const int do_description)
 {
+  icaltimezone *utc = icaltimezone_get_utc_timezone();
+  icaltimetype start_utc, end_utc;
   icalproperty *p, *q;
+  int first;
 
-  printf("<div class=\"event");
+  printf("<div class=vevent><p class=\"");
 
-  /* Add all categories as HTML classes */
+  /* Add all categories to the class attribute */
+  first = 1;
   p = icalcomponent_get_first_property(ev.event, ICAL_CATEGORIES_PROPERTY);
   while (p) {
-    printf(" ");
+    if (first) first = 0; else printf(" ");
     print_as_one_word(icalproperty_get_categories(p));
     p = icalcomponent_get_next_property(ev.event, ICAL_CATEGORIES_PROPERTY);
   }
-  printf("\">");
+  printf("\">\n<span class=categories>");
+
+  /* Also add all categories as content */
+  first = 1;
+  p = icalcomponent_get_first_property(ev.event, ICAL_CATEGORIES_PROPERTY);
+  while (p) {
+    if (first) first = 0; else printf(", ");
+    print_as_one_word(icalproperty_get_categories(p));
+    p = icalcomponent_get_next_property(ev.event, ICAL_CATEGORIES_PROPERTY);
+  }
+  printf("</span>\n");
 
   /* If there is a time, print it */
+  start_utc = icaltime_convert_to_zone(ev.start, utc);
+  end_utc = icaltime_convert_to_zone(ev.end, utc);
   if (ev.start.hour || ev.start.minute || ev.end.hour || ev.end.minute)
-    printf("<p><span class=time>%02d:%02d-%02d:%02d</span> ",
-	   ev.start.hour, ev.start.minute, ev.end.hour, ev.end.minute);
+    printf("<span class=time><abbr class=dtstart\n\
+title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr>-<abbr class=dtend\n\
+title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr></span>\n",
+	   start_utc.year, start_utc.month, start_utc.day, start_utc.hour,
+	   start_utc.minute, start_utc.second,
+	   ev.start.hour, ev.start.minute,
+	   end_utc.year, end_utc.month, end_utc.day, end_utc.hour,
+	   end_utc.minute, end_utc.second,
+	   ev.end.hour, ev.end.minute);
   else
-    printf("<p class=notime>");
+    printf("<span class=notime><abbr class=dtstart\n\
+title=\"%04d%02d%02d\">(whole</abbr> <abbr class=duration\n\
+title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
+	   start_utc.day);
 
   /* Print the summary */
   printf("<span class=summary>");
@@ -329,7 +349,7 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
     /* Check if the event is of the right class (unless we accept all) */
     if (classmask || notclassmask) {
       p = icalcomponent_get_first_property(h, ICAL_CLASS_PROPERTY);
-      class = p ? icalproperty_get_value_as_string(p) : "NONE";
+      class = p ? icalproperty_get_value_as_string(p) : "PUBLIC";
       if (classmask && strcasecmp(classmask, class) != 0) continue;
       if (notclassmask && strcasecmp(notclassmask, class) == 0) continue;
     }
@@ -357,6 +377,8 @@ static void iterate(icalcomponent *c, struct icaltimetype periodstart,
       /* Check if this event is at least partially within our period */
       if (icaltime_compare(dtstart, periodend) <= 0) {
 	dtend = icalcomponent_get_dtend(h);
+	if (dtend.year + dtend.month + dtend.day + dtend.hour + dtend.minute +
+	    dtend.second == 0) dtend = dtstart;
 	if (icaltime_compare(periodstart, dtend) <= 0) {
 
 	  /* Add to as many days as it spans */
@@ -404,15 +426,19 @@ int main(int argc, char *argv[])
   char *footer = NULL, *class = NULL, *category = NULL;
   char *not_class = NULL, *not_category = NULL;
   char c;
-  int do_description = 0;
+  int dummy1, dummy2, dummy3, do_description = 0;
   icaltimezone *tz;
 
   /* We handle errors ourselves */
   icalerror_errors_are_fatal = 0;
-  icalerrno = 0;
+  icalerror_clear_errno();
+
+  icaltimezone_set_tzid_prefix("/kde.org/Olson_20080523_1/"); 
+  icaltimezone_set_tzid_prefix(""); 
+  set_zone_directory("/usr/share/apps/libical/zoneinfo/"); /* TO DO */
+  tz = icaltimezone_get_utc_timezone();		/* Default */
 
   /* Read commandline */
-  tz = icaltimezone_get_utc_timezone();		/* Default */
   while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
     switch (c) {
     case 'p': class = strdup(optarg); break;
@@ -426,14 +452,17 @@ int main(int argc, char *argv[])
     }
   }
   if (optind == argc) fatal(ERR_USAGE, USAGE);
-  periodstart = icaltime_from_string(argv[optind]);
-  if (icalerrno)
+  if (sscanf(argv[optind], "%04d%02d%02d", &dummy1, &dummy2, &dummy3) < 3)
     fatal(ERR_DATE, "Incorrect date '%s', must be YYYYMMDD.\n", argv[optind]);
+  periodstart = icaltime_from_string(argv[optind]);
+  if (icalerrno) ;		/* TO DO */
   optind++;
   if (optind == argc) fatal(ERR_USAGE, USAGE);
   duration = icaldurationtype_from_string(argv[optind]);
+  /*
   if (icalerrno)
     fatal(ERR_DATE, "Incorrect duration '%s', must be PnW or PnD.\n", argv[optind]);
+  */
   optind++;
   stream = optind == argc ? stdin : fopen(argv[optind], "r");
   if (!stream) {perror(argv[optind]); exit(1);}

@@ -3,9 +3,11 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.5 2003/11/13 22:28:07 bbos Exp $
+ * Version: $Id: icalmerge.c,v 1.6 2009/02/22 21:09:27 bbos Exp $
  */
 
+#include "config.h"
+#include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
@@ -15,16 +17,10 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <ctype.h>
-#include <ical.h>
-#include <icalss.h>
-#undef PACKAGE_BUGREPORT	/* Why are they in ical.h? */
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#undef PACKAGE
-#undef VERSION
-#include "config.h"
+#include <libical/icalcomponent.h>
+#include <libical/icalparser.h>
+#include <libical/icalset.h>
+#include <libical/icalfileset.h>
 
 
 #define PRODID "-//W3C//NONSGML icalmerge " VERSION "//EN"
@@ -120,6 +116,7 @@ static int hcreate(size_t nel)
 }
 
 
+#if 0
 /* hdestroy -- deallocate hash table */
 static void hdestroy(void)
 {
@@ -129,6 +126,7 @@ static void hdestroy(void)
   free(htab);
   htab_size = 0;
 }
+#endif
 
 
 /* hsearch -- search for and/or insert an entry in the hash table */

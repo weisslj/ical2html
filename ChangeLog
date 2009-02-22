@@ -1,3 +1,7 @@
+2009-02-22  Bert Bos  <bert@w3.org>
+
+	* Now using libical 0.43
+
 2003-07-31  Bert Bos  <bert@w3.org>
 
 	* Released version 0.4

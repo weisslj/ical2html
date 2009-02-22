@@ -14,14 +14,13 @@ th, td {
     padding: 0.5%;
     width: 13%}
 td {
-    min-height; 5em;
-    background: #CCC;
+    min-height: 5em;
+    height: 5em; /* min-height doesn't seem to work on TD in FF3 */
     background: #FFF;
     border: thin solid}
 td.skip { 
     background: white;
-    background: #CCC;
-    /*border: none*/ }
+    background: #CCC}
 th { 
     text-align: left;
     background: #369;
@@ -34,8 +33,7 @@ caption {
     font-size: xx-large;
     font-weight: bold}
 p.date {
-    color: #FFF;
-    color: #CCC;
+    color: #DDD;
     font-size: 4em;
     margin-bottom: -1em;
     font-weight: bold;
@@ -51,28 +49,30 @@ pre.description {
     margin: 0;
     padding: 0.5em;
     border: thin solid}
-div.event:hover .description {
+div.vevent:hover .description {
     display: block;
     position: absolute}
 p {
     margin: 0;
     padding: 0 }
-p.notime { font-style: italic }
+span.notime { display: none }
 span.time { font-weight: bold }
 
-div.event {
+div.vevent {
     margin: 0.3em 0;
     padding-left: 0.6em;
     text-indent: -0.6em}
 
-div.event {color: #666}		/* Default */
-div.Birthday {color: #C66}
-div.Birthday.Personal {color: #C93}
-div.Dinner {color: #090}
-div.Holiday {color: #393}
-div.Meeting {color: #990}
-div.Meeting.Phone-Call {color: #339}
-div.Miscellaneous {color: #960}
-div.Personal {color: #C60}
-div.Phone-Call {color: #909}
-div.Travel {color: #069}
+div.vevent {color: #666}		/* Default */
+p.Birthday {color: #C66}
+p.Birthday.Personal {color: #C93}
+p.Dinner {color: #090}
+p.Holiday {color: #393}
+p.Meeting {color: #990}
+p.Meeting.Phone-Call {color: #339}
+p.Miscellaneous {color: #960}
+p.Personal {color: #C60}
+p.Phone-Call {color: #909}
+p.Travel {color: #069}
+
+span.categories {display: none}

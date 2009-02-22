@@ -51,7 +51,7 @@ installed:
 If "configure" complains about "libical", download it from
 http://softwarestudio.org/libical/ or
 http://sourceforge.net/projects/freeassociation/. Ical2html was
-developed with libical version 0.24.RC4. If you have libical already,
+developed with libical version 0.43. (The version in Debian Lenny is 0.31 and doesn't work with ical2html.) If you have libical already,
 but "configure" can't find it in the usual directories, try adding
 explicit CPPFLAGS and LDFLAGS, e.g., like this:
 
@@ -90,4 +90,4 @@ If you are asked for a password, answer "anonymous"
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2003/07/30 23:15:02 $
+Modified: $Date: 2009/02/22 21:09:27 $
