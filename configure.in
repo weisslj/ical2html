@@ -11,14 +11,14 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
-AC_SEARCH_LIBS(icalparser_new, ical)
-AC_SEARCH_LIBS(icalfileset_new, icalss)
+AC_SEARCH_LIBS(icalparser_new, ical,,AC_MSG_FAILURE(Cannot find libical.))
+AC_SEARCH_LIBS(icalfileset_new, icalss,,AC_MSG_FAILURE(Cannot find libicalss.))
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 AC_HEADER_ASSERT
-AC_CHECK_HEADER(icalgauge.h,,AC_MSG_ERROR(Cannot find icalgauge.h.))
+AC_CHECK_HEADER(icalgauge.h,,AC_MSG_FAILURE(Cannot find icalgauge.h.))
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
