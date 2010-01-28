@@ -3,7 +3,6 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalfilter.c,v 1.7 2009/02/22 21:09:27 bbos Exp $
  */
 
 #include "config.h"
@@ -22,9 +21,12 @@
 #include <icalerror.h>
 #include <icaltimezone.h>
 */
-#include <libical/icalparser.h>
-#include <libical/icalset.h>
-#include <libical/icalfileset.h>
+#include <libical/ical.h>
+#include <libical/icalss.h>
+/*
+#include <icalset.h>
+#include <icalfileset.h>
+*/
 
 #define PRODID "-//W3C//NONSGML icalfilter 0.1//EN"
 

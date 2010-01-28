@@ -8,7 +8,6 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 22 Sep 2002
- * Version: $Id: ical2html.c,v 1.11 2009/02/22 21:09:27 bbos Exp $
  */
 
 #include "config.h"
@@ -21,11 +20,14 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <ctype.h>
-#include <libical/icaltime.h>
-#include <libical/icalcomponent.h>
-#include <libical/icalparser.h>
-#include <libical/icalerror.h>
-#include <libical/icaltimezone.h>
+#include <libical/ical.h>
+/*
+#include <icaltime.h>
+#include <icalcomponent.h>
+#include <icalparser.h>
+#include <icalerror.h>
+#include <icaltimezone.h>
+*/
 
 #define INC 20			/* Used for realloc() */
 
@@ -433,8 +435,8 @@ int main(int argc, char *argv[])
   icalerror_errors_are_fatal = 0;
   icalerror_clear_errno();
 
-  icaltimezone_set_tzid_prefix("/kde.org/Olson_20080523_1/"); 
-  icaltimezone_set_tzid_prefix(""); 
+  /* icaltimezone_set_tzid_prefix("/kde.org/Olson_20080523_1/"); */
+  /* icaltimezone_set_tzid_prefix(""); */
   set_zone_directory("/usr/share/apps/libical/zoneinfo/"); /* TO DO */
   tz = icaltimezone_get_utc_timezone();		/* Default */
 

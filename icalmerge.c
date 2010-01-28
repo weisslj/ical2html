@@ -3,7 +3,6 @@
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
- * Version: $Id: icalmerge.c,v 1.6 2009/02/22 21:09:27 bbos Exp $
  */
 
 #include "config.h"

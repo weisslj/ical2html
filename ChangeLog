@@ -1,3 +1,7 @@
+2010-01-28  Bert Bos  <bert@sophia.w3.org>
+
+	* Now using libical 0.43-2~bpo50+1 (from Debian Backports)
+
 2009-02-22  Bert Bos  <bert@w3.org>
 
 	* Now using libical 0.43
