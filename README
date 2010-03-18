@@ -41,21 +41,27 @@ Then configure and compile. This requires automake and autoconf to be
 installed:
 
     $ cd Ical2html
-    $ aclocal
-    $ autoheader
-    $ automake -a
-    $ autoconf
+    $ autoreconf -i
     $ ./configure
     $ make
 
 If "configure" complains about "libical", download it from
 http://softwarestudio.org/libical/ or
 http://sourceforge.net/projects/freeassociation/. Ical2html was
-developed with libical version 0.43. (The version in Debian Lenny is 0.31 and doesn't work with ical2html.) If you have libical already,
-but "configure" can't find it in the usual directories, try adding
-explicit CPPFLAGS and LDFLAGS, e.g., like this:
+developed with libical version 0.43.
 
-    $ CPPFLAGS=-I/path/to/include/ LDFLAGS=-L/path/to/lib/ ./configure
+Debian 5.0 (Lenny)
+    The version of libical in Debian Lenny is 0.31 and doesn't work
+    with ical2html. But the libical from Debian Backports
+    (http://www.backports.org/) does.
+
+Max OS X
+    If you installed libical from MacPorts (http://www.macports.org/),
+    you'll need to tell configure where the header files and libraries
+    are. Run configure as follows (all on one line):
+
+    CFLAGS="-I/opt/local/include -I/opt/local/include/libical
+    -L/opt/local/lib" ./configure
 
 If you managed to compile, but the program fails to run with an error
 about "libical.so" not found, try to set the variable
@@ -90,4 +96,4 @@ If you are asked for a password, answer "anonymous"
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2010/01/28 17:10:30 $
+Modified: $Date: 2010/03/18 00:23:55 $
