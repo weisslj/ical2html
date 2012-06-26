@@ -44,6 +44,7 @@
   -d, --description            include event's long description in a <PRE>\n\
   -f, --footer=TEXT            add text at the bottom of the HTML file\n\
   -z, --timezone=country/city  adjust for this timezone (default: GMT)\n\
+  -m, --monday		       draw Monday as first week day (Sunday is default)\n\
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
   duration is in days or weeks, e.g., P5W (5 weeks) or P60D (60 days)\n\
   file is an iCalendar file, default is standard input\n"
@@ -57,10 +58,11 @@ static struct option options[] = {
   {"description", 0, 0, 'd'},
   {"footer", 1, 0, 'f'},
   {"timezone", 1, 0, 'z'},
+  {"monday", 0, 0, 'm'},
   {0, 0, 0, 0}
 };
 
-#define OPTIONS "dp:P:c:C:f:z:"
+#define OPTIONS "dmp:P:c:C:f:z:"
 
 static const char *months[] = {"", "January", "February", "March", "April",
 			       "May", "June", "July", "August", "September",
@@ -249,14 +251,18 @@ title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
 static void print_calendar(const struct icaltimetype start,
 			   const struct icaldurationtype duration,
 			   const int nrevents, const event_item events[],
-			   const int do_description)
+			   const int do_description,
+			   const int starts_on_monday)
 {
   struct icaltimetype day;
   struct icaltimetype end;
   char s[9];
   int y, m, d, w;
-  int i = 0;			/* Loop over events */
-
+  int i = 0;		/* Loop over events */
+  int skip;		/* How many days to skip of that week until 1st */
+  int lastDay;
+  if (starts_on_monday) lastDay = 2; else lastDay = 1;
+  
   end = icaltime_add(start, duration);
 
   /* Loop over the years in our period */
@@ -271,14 +277,26 @@ static void print_calendar(const struct icaltimetype start,
       day = icaltime_from_string(s);
 
       printf("<table><caption>%s %d</caption>\n", months[m], y);
-      printf("<thead><tr><th>Sunday<th>Monday<th>Tuesday<th>Wednesday");
-      printf("<th>Thursday<th>Friday<th>Saturday\n");
+      printf("<thead><tr>");
+      if (starts_on_monday) {
+         printf("<th>Monday<th>Tuesday<th>Wednesday");
+      	 printf("<th>Thursday<th>Friday<th>Saturday<th>Sunday\n");
+      }
+      else {
+         printf("<th>Sunday<th>Monday<th>Tuesday<th>Wednesday");
+      	 printf("<th>Thursday<th>Friday<th>Saturday\n");
+
+      }
       printf("<tbody>\n");
 
       w = icaltime_day_of_week(day);
-      if (w != 1) {		/* Empty cells until 1st of month */
-	printf("<tr>\n");
-	for (; w > 1; w--) printf("<td class=skip>\n");
+      if (starts_on_monday)
+      	if (w == 1) skip = 6; else skip = w-2;
+      else
+        skip = w-1;
+
+      if (skip != 0) {
+        for(; skip > 0; skip--) printf("<td class=skip>\n");
       }
 
       /* Skip events before this day (can only occur at very start) */
@@ -291,7 +309,11 @@ static void print_calendar(const struct icaltimetype start,
 	sprintf(s, "%04d%02d%02d", y, m, d);
 	day = icaltime_from_string(s);
 	w = icaltime_day_of_week(day);
-	if (w == 1) printf("<tr>\n");
+	if (w == lastDay)
+	{
+		printf("<tr>\n");
+	}
+
 	printf("<td><p class=date>%d\n\n", d);
 
 	/* Print all events on this day (the events are sorted) */
@@ -430,6 +452,7 @@ int main(int argc, char *argv[])
   char c;
   int dummy1, dummy2, dummy3, do_description = 0;
   icaltimezone *tz;
+  int starts_on_monday = 0;
 
   /* We handle errors ourselves */
   icalerror_errors_are_fatal = 0;
@@ -450,6 +473,7 @@ int main(int argc, char *argv[])
     case 'd': do_description = 1; break;
     case 'f': footer = strdup(optarg); break;
     case 'z': tz = icaltimezone_get_builtin_timezone(optarg); break;
+    case 'm': starts_on_monday = 1; break;
     default: fatal(ERR_USAGE, USAGE);
     }
   }
@@ -489,7 +513,7 @@ int main(int argc, char *argv[])
 
   /* Print the sorted results */
   print_header(periodstart, duration);
-  print_calendar(periodstart, duration, nrevents, events, do_description);
+  print_calendar(periodstart, duration, nrevents, events, do_description, starts_on_monday);
   print_footer(footer);
 
   /* Clean up */
