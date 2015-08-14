@@ -1,3 +1,11 @@
+2015-08-15  Bert Bos  <bert@w3.org>
+
+	* ical2html.c: Thanks to David Rysdam <drysdam at ll.mit.edu>, it
+	is now possible to include the LOCATION field in the output,
+	controlled by option -l. The mark-up for the optional DESCRIPTION
+	chnaged as a result and the default style sheet (calendar.css) has
+	been updated.
+
 2010-03-18  Bert Bos  <bert@Europa.local>
 
 	* Released version 2.0, see http://www.w3.org/Tools/Ical2html/
