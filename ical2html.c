@@ -42,6 +42,7 @@
   -c, --category=CATEGORY      only events of this category\n\
   -C, --not-category=CATEGORY  exclude events of this category\n\
   -d, --description            include event's long description in a <PRE>\n\
+  -l, --location               include event's location in that <PRE>\n\
   -f, --footer=TEXT            add text at the bottom of the HTML file\n\
   -z, --timezone=country/city  adjust for this timezone (default: GMT)\n\
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
@@ -55,12 +56,13 @@ static struct option options[] = {
   {"category", 1, 0, 'c'},
   {"not-category", 1, 0, 'C'},
   {"description", 0, 0, 'd'},
+  {"location", 0, 0, 'l'},
   {"footer", 1, 0, 'f'},
   {"timezone", 1, 0, 'z'},
   {0, 0, 0, 0}
 };
 
-#define OPTIONS "dp:P:c:C:f:z:"
+#define OPTIONS "dlp:P:c:C:f:z:"
 
 static const char *months[] = {"", "January", "February", "March", "April",
 			       "May", "June", "July", "August", "September",
@@ -177,11 +179,11 @@ static void print_attribute(const char *s)
 
 
 /* print_event -- print HTML paragraph for one event */
-static void print_event(const event_item ev, const int do_description)
+static void print_event(const event_item ev, const int do_description, const int do_location)
 {
   icaltimezone *utc = icaltimezone_get_utc_timezone();
   icaltimetype start_utc, end_utc;
-  icalproperty *p, *q;
+  icalproperty *p, *desc, *loc;
   int first;
 
   printf("<div class=vevent><p class=\"");
@@ -231,15 +233,32 @@ title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
   if (p) print_escaped(icalproperty_get_summary(p));
   printf("</span>\n");
 
-  /* If we want descriptions and there is one, print it */
-  if (do_description) {
-    q = icalcomponent_get_first_property(ev.event, ICAL_DESCRIPTION_PROPERTY);
-    if (q) {
-      printf("<pre class=description>");
-      print_escaped(icalproperty_get_description(q));
-      printf("</pre>\n");
-    }
+  /* If we want descriptions, check if there is one */
+  if (do_description)
+    desc = icalcomponent_get_first_property(ev.event, ICAL_DESCRIPTION_PROPERTY);
+  else
+    desc = NULL;
+
+  /* If we want locations, check if there is one */
+  if (do_location)
+    loc = icalcomponent_get_first_property(ev.event, ICAL_LOCATION_PROPERTY);
+  else
+    loc = NULL;
+
+  /* If we have a description and/or location, print them */
+  if (desc || loc) printf("<pre>");
+  if (desc) {
+    printf("<span class=description>");
+    print_escaped(icalproperty_get_description(desc));
+    printf("</span>");
   }
+  if (desc && loc) printf("\n");
+  if (loc) {
+    printf("<b class=location>");
+    print_escaped(icalproperty_get_description(loc));
+    printf("</b>");
+  }
+  if (desc || loc) printf("</pre>\n");
 
   printf("</div>\n\n");
 }
@@ -249,7 +268,7 @@ title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
 static void print_calendar(const struct icaltimetype start,
 			   const struct icaldurationtype duration,
 			   const int nrevents, const event_item events[],
-			   const int do_description)
+			   const int do_description, const int do_location)
 {
   struct icaltimetype day;
   struct icaltimetype end;
@@ -297,7 +316,7 @@ static void print_calendar(const struct icaltimetype start,
 	/* Print all events on this day (the events are sorted) */
 	for (; i < nrevents
 	       && icaltime_compare_date_only(events[i].start, day) == 0; i++)
-	  print_event(events[i], do_description);
+		print_event(events[i], do_description, do_location);
       }
 
       printf("</table>\n\n");
@@ -428,7 +447,7 @@ int main(int argc, char *argv[])
   char *footer = NULL, *class = NULL, *category = NULL;
   char *not_class = NULL, *not_category = NULL;
   char c;
-  int dummy1, dummy2, dummy3, do_description = 0;
+  int dummy1, dummy2, dummy3, do_description = 0, do_location = 0;
   icaltimezone *tz;
 
   /* We handle errors ourselves */
@@ -448,6 +467,7 @@ int main(int argc, char *argv[])
     case 'c': category = strdup(optarg); break;
     case 'C': not_category = strdup(optarg); break;
     case 'd': do_description = 1; break;
+    case 'l': do_location = 1; break;
     case 'f': footer = strdup(optarg); break;
     case 'z': tz = icaltimezone_get_builtin_timezone(optarg); break;
     default: fatal(ERR_USAGE, USAGE);
@@ -489,7 +509,7 @@ int main(int argc, char *argv[])
 
   /* Print the sorted results */
   print_header(periodstart, duration);
-  print_calendar(periodstart, duration, nrevents, events, do_description);
+  print_calendar(periodstart, duration, nrevents, events, do_description, do_location);
   print_footer(footer);
 
   /* Clean up */

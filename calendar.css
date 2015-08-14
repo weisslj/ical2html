@@ -15,7 +15,7 @@ th, td {
     width: 13%}
 td {
     min-height: 5em;
-    height: 5em; /* min-height doesn't seem to work on TD in FF3 */
+    height: 5em;
     background: #FFF;
     border: thin solid}
 td.skip { 
@@ -38,7 +38,7 @@ p.date {
     margin-bottom: -1em;
     font-weight: bold;
     text-align: right}
-pre.description {
+pre {
     display: none;
     font-family: sans-serif;
     text-indent: 0;
@@ -49,9 +49,11 @@ pre.description {
     margin: 0;
     padding: 0.5em;
     border: thin solid}
-div.vevent:hover .description {
+div.vevent:hover pre {
     display: block;
     position: absolute}
+.location {
+    display: block}
 p {
     margin: 0;
     padding: 0 }
