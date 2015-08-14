@@ -45,10 +45,11 @@ installed:
     $ ./configure
     $ make
 
-If "configure" complains about "libical", download it from
-http://softwarestudio.org/libical/ or
+If "configure" complains about "libical", look for libical-dev or
+libical in the software repository for your operating system, or
+download it from http://softwarestudio.org/libical/ or
 http://sourceforge.net/projects/freeassociation/. Ical2html was
-developed with libical version 0.43.
+developed with libical versions 0.43 and 1.0.
 
 Debian 5.0 (Lenny)
     The version of libical in Debian Lenny is 0.31 and doesn't work
@@ -96,4 +97,4 @@ If you are asked for a password, answer "anonymous"
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2010/03/18 00:23:55 $
+Modified: $Date: 2015/08/14 23:43:00 $
