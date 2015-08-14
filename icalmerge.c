@@ -1,5 +1,5 @@
 /*
- * icalfilter -- filter an iCalendar file
+ * icalmerge -- merge iCalendar files, keeping the newer of any duplicate events
  *
  * Author: Bert Bos <bert@w3.org>
  * Created: 30 Sep 2002
