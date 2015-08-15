@@ -1,5 +1,15 @@
+The package contains three programs:
+
 ical2html takes an iCalendar file and outputs an HTML file showing one
-or more months in the form of tables. Requires libical.
+or more months in the form of tables.
+
+icalfilter filters events from an icalendar files based on category
+and/or class.
+
+icalmerge combines two or more icalendar files, keeping only the newer
+of any duplicate events.
+
+
 
     0. Compiling from source
     1. Downloading and compiling from CVS
@@ -97,4 +107,4 @@ If you are asked for a password, answer "anonymous"
 
 
 Created: 28 Sep 2002
-Modified: $Date: 2015/08/14 23:43:00 $
+Modified: $Date: 2015/08/15 00:02:56 $
