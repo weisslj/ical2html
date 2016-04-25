@@ -474,7 +474,7 @@ int main(int argc, char *argv[])
   int starts_on_monday = 0;
 
   /* We handle errors ourselves */
-  icalerror_errors_are_fatal = 0;
+  icalerror_set_errors_are_fatal(0);
   icalerror_clear_errno();
 
   /* icaltimezone_set_tzid_prefix("/kde.org/Olson_20080523_1/"); */

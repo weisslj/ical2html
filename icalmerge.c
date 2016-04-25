@@ -258,8 +258,8 @@ int main(int argc, char *argv[])
   icalcomponent *newset;
 
   /* We handle errors ourselves */
-  icalerror_errors_are_fatal = 0;
-  icalerrno = 0;
+  icalerror_set_errors_are_fatal(0);
+  icalerror_clear_errno();
 
   /* Read commandline */
   while ((c = getopt_long(argc, argv, OPTIONS, options, NULL)) != -1) {
