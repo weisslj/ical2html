@@ -43,6 +43,7 @@
   -C, --not-category=CATEGORY  exclude events of this category\n\
   -d, --description            include event's long description in a <PRE>\n\
   -l, --location               include event's location in that <PRE>\n\
+  -t, --title=TEXT             use text for HTML title\n\
   -f, --footer=TEXT            add text at the bottom of the HTML file\n\
   -z, --timezone=country/city  adjust for this timezone (default: GMT)\n\
   -m, --monday                 draw Monday as first week day (Sunday is default)\n\
@@ -58,6 +59,7 @@ static struct option options[] = {
   {"not-category", 1, 0, 'C'},
   {"description", 0, 0, 'd'},
   {"location", 0, 0, 'l'},
+  {"title", 1, 0, 't'},
   {"footer", 1, 0, 'f'},
   {"timezone", 1, 0, 'z'},
   {"monday", 0, 0, 'm'},
@@ -116,8 +118,24 @@ static char* read_stream(char *s, size_t size, void *d)
 } 
 
 
+/* print_escaped -- printf with <, >, & and " escaped */
+static void print_escaped(const char *s)
+{
+  const char *t;
+
+  for (t = s; *t; t++) 
+    switch (*t) {
+    case '<': printf("&lt;"); break;
+    case '>': printf("&gt;"); break;
+    case '&': printf("&amp;"); break;
+    default: putchar(*t);
+    }
+}
+
+
 /* print_header -- print boilerplate at start of output */
-static void print_header(struct icaltimetype start, struct icaldurationtype dur)
+static void print_header(struct icaltimetype start, struct icaldurationtype dur,
+			 const char *title)
 {
   struct icaltimetype end = icaltime_add(start, dur);
 
@@ -125,9 +143,14 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur)
   printf("  \"http://www.w3.org/TR/html4/strict.dtd\">\n");
   printf("<meta http-equiv=\"Content-Type\" ");
   printf("content=\"text/html;charset=UTF-8\">\n");
-  printf("<title>Calendar %d %s %d - %d %s %d</title>\n",
-	 start.day, months[start.month], start.year,
-	 end.day, months[end.month], end.year);
+  printf("<title>");
+  if (title)
+    print_escaped(title);
+  else
+    printf("Calendar %d %s %d - %d %s %d",
+	   start.day, months[start.month], start.year,
+	   end.day, months[end.month], end.year);
+  printf("</title>\n");
   printf("<link rel=stylesheet href=\"calendar.css\">\n\n");
 }
 
@@ -147,21 +170,6 @@ static void print_as_one_word(const char *s)
   for (t = s; *t; t++)
     if (isalnum(*t)) putchar(*t);
     else putchar('-');
-}
-
-
-/* print_escaped -- printf with <, >, & and " escaped */
-static void print_escaped(const char *s)
-{
-  const char *t;
-
-  for (t = s; *t; t++) 
-    switch (*t) {
-    case '<': printf("&lt;"); break;
-    case '>': printf("&gt;"); break;
-    case '&': printf("&amp;"); break;
-    default: putchar(*t);
-    }
 }
 
 
@@ -495,7 +503,7 @@ int main(int argc, char *argv[])
   icalparser *parser;
   struct icaltimetype periodstart;
   struct icaldurationtype duration;
-  char *footer = NULL, *class = NULL, *category = NULL;
+  char *title = NULL, *footer = NULL, *class = NULL, *category = NULL;
   char *not_class = NULL, *not_category = NULL;
   char c;
   int dummy1, dummy2, dummy3, do_description = 0, do_location = 0;
@@ -520,6 +528,7 @@ int main(int argc, char *argv[])
     case 'C': not_category = strdup(optarg); break;
     case 'd': do_description = 1; break;
     case 'l': do_location = 1; break;
+    case 't': title = strdup(optarg); break;
     case 'f': footer = strdup(optarg); break;
     case 'z': tz = icaltimezone_get_builtin_timezone(optarg); break;
     case 'm': starts_on_monday = 1; break;
@@ -564,7 +573,7 @@ int main(int argc, char *argv[])
   filter_queue_recurring();
 
   /* Print the sorted results */
-  print_header(periodstart, duration);
+  print_header(periodstart, duration, title);
   print_calendar(periodstart, duration, nrevents, events, do_description, do_location, starts_on_monday);
   print_footer(footer);
 
