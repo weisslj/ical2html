@@ -45,6 +45,7 @@
   -l, --location               include event's location in that <PRE>\n\
   -t, --title=TEXT             use text for HTML title\n\
   -f, --footer=TEXT            add text at the bottom of the HTML file\n\
+  -T, --today                  mark current day with #today in HTML file\n\
   -z, --timezone=country/city  adjust for this timezone (default: GMT)\n\
   -m, --monday                 draw Monday as first week day (Sunday is default)\n\
   start is of the form yyyymmdd, e.g., 20020927 (27 Sep 2002)\n\
@@ -61,12 +62,13 @@ static struct option options[] = {
   {"location", 0, 0, 'l'},
   {"title", 1, 0, 't'},
   {"footer", 1, 0, 'f'},
+  {"today", 0, 0, 'T'},
   {"timezone", 1, 0, 'z'},
   {"monday", 0, 0, 'm'},
   {0, 0, 0, 0}
 };
 
-#define OPTIONS "dlmp:P:c:C:f:z:"
+#define OPTIONS "dlmTp:P:c:C:f:z:"
 
 static const char *months[] = {"", "January", "February", "March", "April",
 			       "May", "June", "July", "August", "September",
@@ -288,7 +290,8 @@ static void print_calendar(const struct icaltimetype start,
 			   const struct icaldurationtype duration,
 			   const int nrevents, const event_item events[],
 			   const int do_description, const int do_location,
-			   const int starts_on_monday)
+			   const int starts_on_monday,
+			   const int do_today, const struct icaltimetype now)
 {
   struct icaltimetype day;
   struct icaltimetype end;
@@ -350,7 +353,10 @@ static void print_calendar(const struct icaltimetype start,
 		printf("<tr>\n");
 	}
 
-	printf("<td><p class=date>%d\n\n", d);
+	printf("<td");
+	if (do_today && icaltime_compare_date_only(day, now) == 0)
+	  printf(" id=today");
+	printf("><p class=date>%d\n\n", d);
 
 	/* Print all events on this day (the events are sorted) */
 	for (; i < nrevents
@@ -507,7 +513,9 @@ int main(int argc, char *argv[])
   char *not_class = NULL, *not_category = NULL;
   char c;
   int dummy1, dummy2, dummy3, do_description = 0, do_location = 0;
+  int do_today = 0;
   icaltimezone *tz;
+  struct icaltimetype now;
   int starts_on_monday = 0;
 
   /* We handle errors ourselves */
@@ -530,6 +538,7 @@ int main(int argc, char *argv[])
     case 'l': do_location = 1; break;
     case 't': title = strdup(optarg); break;
     case 'f': footer = strdup(optarg); break;
+    case 'T': do_today = 1; break;
     case 'z': tz = icaltimezone_get_builtin_timezone(optarg); break;
     case 'm': starts_on_monday = 1; break;
     default: fatal(ERR_USAGE, USAGE);
@@ -551,6 +560,7 @@ int main(int argc, char *argv[])
   stream = optind == argc ? stdin : fopen(argv[optind], "r");
   if (!stream) {perror(argv[optind]); exit(1);}
   if (optind + 1 < argc) fatal(ERR_USAGE, USAGE);
+  now = icaltime_current_time_with_zone(tz);
 
   /* Create a new parser object */
   parser = icalparser_new();
@@ -574,7 +584,8 @@ int main(int argc, char *argv[])
 
   /* Print the sorted results */
   print_header(periodstart, duration, title);
-  print_calendar(periodstart, duration, nrevents, events, do_description, do_location, starts_on_monday);
+  print_calendar(periodstart, duration, nrevents, events, do_description,
+		 do_location, starts_on_monday, do_today, now);
   print_footer(footer);
 
   /* Clean up */

@@ -21,6 +21,9 @@ td {
 td.skip { 
     background: white;
     background: #CCC}
+td#today {
+    background: #F2F2F2;
+    border: medium solid #369}
 th { 
     text-align: left;
     background: #369;
