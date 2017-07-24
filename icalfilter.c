@@ -42,6 +42,7 @@
   -P, --not-class=CLASS        exclude (PUBLIC, CONFIDENTIAL, PRIVATE, NONE)\n\
   -c, --category=CATEGORY      only events of this category\n\
   -C, --not-category=CATEGORY  exclude events of this category\n\
+      --add-category=CATEGORY  add category to output events\n\
   input and output are iCalendar files\n"
 
 /* Long command line options */
@@ -50,6 +51,7 @@ static struct option options[] = {
   {"not-class", 1, 0, 'P'},
   {"category", 1, 0, 'c'},
   {"not-category", 1, 0, 'C'},
+  {"add-category", 1, 0, 'a'},
   {0, 0, 0, 0}
 };
 
@@ -90,6 +92,7 @@ int main(int argc, char *argv[])
   icalparser *parser;
   char *classmask = NULL, *categorymask = NULL;
   char *notclassmask = NULL, *notcategorymask = NULL;
+  char *addcategory = NULL;
   char c;
   const char *class;
   icalset *out;
@@ -107,6 +110,7 @@ int main(int argc, char *argv[])
     case 'P': notclassmask = strdup(optarg); break;
     case 'c': categorymask = strdup(optarg); break;
     case 'C': notcategorymask = strdup(optarg); break;
+    case 'a': addcategory = strdup(optarg); break;
     default: fatal(ERR_USAGE, USAGE);
     }
   }
@@ -169,6 +173,10 @@ int main(int argc, char *argv[])
       while (p && strcasecmp(notcategorymask, icalproperty_get_categories(p)))
 	p = icalcomponent_get_next_property(h, ICAL_CATEGORIES_PROPERTY);
       if (p) continue;		/* Some category equal to notcategorymask */
+    }
+
+    if (addcategory) {
+      icalcomponent_add_property(h, icalproperty_new_categories(addcategory));
     }
 
     /* The event passed our filters, so add it to the output set */
