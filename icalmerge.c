@@ -200,6 +200,17 @@ static void merge(icalcomponent **a, icalcomponent *b)
     uid = icalcomponent_get_first_property(h, ICAL_UID_PROPERTY);
     /*debug("%s", uid ? icalproperty_get_uid(uid) : "NO UID!?");*/
     if (!uid) continue;				/* Error in iCalendar file */
+
+    /* Always add VEVENTs with RECURRENCE-ID, as these are events overriding
+     * specific instances of recurring VEVENTs and have the same UID as the
+     * recurring event. We could try to filter VEVENTs with same UID *and*
+     * RECURRENCE-ID. */
+    if (icalcomponent_get_first_property(h, ICAL_RECURRENCEID_PROPERTY)) {
+      icalcomponent_remove_component(b, h); /* Move from b... */
+      icalcomponent_add_component(*a, h); /* ... to a */
+      continue;
+    }
+
     e1.key = strdup(icalproperty_get_uid(uid));
     if (! (e = hsearch(e1, FIND))) {
 
