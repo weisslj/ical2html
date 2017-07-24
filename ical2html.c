@@ -190,9 +190,14 @@ static void print_event(const event_item ev, const int do_description, const int
   icaltimezone *utc = icaltimezone_get_utc_timezone();
   icaltimetype start_utc, end_utc;
   icalproperty *p, *desc, *loc;
+  enum icalproperty_status status;
   int first;
 
-  printf("<div class=vevent><p class=\"");
+  status = icalcomponent_get_status(ev.event);
+  printf("<div class=\"vevent");
+  if (status)
+    printf(" %s", icalproperty_status_to_string(status));
+  printf("\"><p class=\"");
 
   /* Add all categories to the class attribute */
   first = 1;
