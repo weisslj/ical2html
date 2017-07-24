@@ -141,10 +141,10 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur,
 {
   struct icaltimetype end = icaltime_add(start, dur);
 
-  printf("<!doctype html public \"-//W3C//DTD HTML 4.01//EN\"\n");
-  printf("  \"http://www.w3.org/TR/html4/strict.dtd\">\n");
-  printf("<meta http-equiv=\"Content-Type\" ");
-  printf("content=\"text/html;charset=UTF-8\">\n");
+  printf("<!DOCTYPE HTML>\n");
+  printf("<html>\n");
+  printf("<head>\n");
+  printf("<meta charset=\"UTF-8\" />\n");
   printf("<title>");
   if (title)
     print_escaped(title);
@@ -153,7 +153,9 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur,
 	   start.day, months[start.month], start.year,
 	   end.day, months[end.month], end.year);
   printf("</title>\n");
-  printf("<link rel=stylesheet href=\"calendar.css\">\n\n");
+  printf("<link rel=\"stylesheet\" type=\"text/css\" href=\"calendar.css\" />\n");
+  printf("</head>\n");
+  printf("<body>\n");
 }
 
 
@@ -161,6 +163,8 @@ static void print_header(struct icaltimetype start, struct icaldurationtype dur,
 static void print_footer(const char *footer)
 {
   if (footer) printf("%s\n", footer);
+  printf("</body>\n");
+  printf("</html>\n");
 }
 
 
@@ -207,7 +211,7 @@ static void print_event(const event_item ev, const int do_description, const int
   printf("<div class=\"vevent");
   if (status)
     printf(" %s", icalproperty_status_to_string(status));
-  printf("\"><p class=\"");
+  printf("\"><div class=\"");
 
   /* Add all categories to the class attribute */
   first = 1;
@@ -217,7 +221,7 @@ static void print_event(const event_item ev, const int do_description, const int
     print_as_one_word(icalproperty_get_categories(p));
     p = icalcomponent_get_next_property(ev.event, ICAL_CATEGORIES_PROPERTY);
   }
-  printf("\">\n<span class=categories>");
+  printf("\">\n<span class=\"categories\">");
 
   /* Also add all categories as content */
   first = 1;
@@ -233,8 +237,8 @@ static void print_event(const event_item ev, const int do_description, const int
   start_utc = icaltime_convert_to_zone(ev.start, utc);
   end_utc = icaltime_convert_to_zone(ev.end, utc);
   if (ev.start.hour || ev.start.minute || ev.end.hour || ev.end.minute)
-    printf("<span class=time><abbr class=dtstart\n\
-title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr>-<abbr class=dtend\n\
+    printf("<span class=\"time\"><abbr class=\"dtstart\"\n\
+title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr>-<abbr class=\"dtend\"\n\
 title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr></span>\n",
 	   start_utc.year, start_utc.month, start_utc.day, start_utc.hour,
 	   start_utc.minute, start_utc.second,
@@ -243,13 +247,13 @@ title=\"%04d%02d%02dT%02d%02d%02dZ\">%02d:%02d</abbr></span>\n",
 	   end_utc.minute, end_utc.second,
 	   ev.end.hour, ev.end.minute);
   else
-    printf("<span class=notime><abbr class=dtstart\n\
-title=\"%04d%02d%02d\">(whole</abbr> <abbr class=duration\n\
+    printf("<span class=\"notime\"><abbr class=\"dtstart\"\n\
+title=\"%04d%02d%02d\">(whole</abbr> <abbr class=\"duration\"\n\
 title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
 	   start_utc.day);
 
   /* Print the summary */
-  printf("<span class=summary>");
+  printf("<span class=\"summary\">");
   p = icalcomponent_get_first_property(ev.event, ICAL_SUMMARY_PROPERTY);
   if (p) print_escaped(icalproperty_get_summary(p));
   printf("</span>\n");
@@ -269,19 +273,19 @@ title=\"1D\">day)</abbr></span>\n", start_utc.year, start_utc.month,
   /* If we have a description and/or location, print them */
   if (desc || loc) printf("<pre>");
   if (desc) {
-    printf("<span class=description>");
+    printf("<span class=\"description\">");
     print_escaped(icalproperty_get_description(desc));
     printf("</span>");
   }
   if (desc && loc) printf("\n");
   if (loc) {
-    printf("<b class=location>");
+    printf("<b class=\"location\">");
     print_escaped(icalproperty_get_description(loc));
     printf("</b>");
   }
   if (desc || loc) printf("</pre>\n");
 
-  printf("</div>\n\n");
+  printf("</div></div>\n\n");
 }
 
 
@@ -316,17 +320,20 @@ static void print_calendar(const struct icaltimetype start,
       day = icaltime_from_string(s);
 
       printf("<table><caption>%s %d</caption>\n", months[m], y);
-      printf("<thead><tr>");
+      printf("<thead><tr>\n");
       if (starts_on_monday) {
-         printf("<th>Monday<th>Tuesday<th>Wednesday");
-         printf("<th>Thursday<th>Friday<th>Saturday<th>Sunday\n");
+         printf("<th>Monday</th><th>Tuesday</th><th>Wednesday</th>");
+         printf("<th>Thursday</th><th>Friday</th><th>Saturday</th>");
+         printf("<th>Sunday</th>\n");
       }
       else {
-         printf("<th>Sunday<th>Monday<th>Tuesday<th>Wednesday");
-         printf("<th>Thursday<th>Friday<th>Saturday\n");
+         printf("<th>Sunday</th><th>Monday</th><th>Tuesday</th>");
+         printf("<th>Wednesday</th><th>Thursday</th><th>Friday</th>");
+         printf("<th>Saturday</th>\n");
 
       }
-      printf("<tbody>\n");
+      printf("</tr></thead>\n");
+      printf("<tbody><tr>\n");
 
       w = icaltime_day_of_week(day);
       if (starts_on_monday)
@@ -335,7 +342,7 @@ static void print_calendar(const struct icaltimetype start,
          skip = w-1;
 
       if (skip != 0) {
-         for(; skip > 0; skip--) printf("<td class=skip>&nbsp;\n");
+         for(; skip > 0; skip--) printf("<td class=\"skip\">&nbsp;</td>\n");
       }
 
       /* Skip events before this day (can only occur at very start) */
@@ -348,23 +355,24 @@ static void print_calendar(const struct icaltimetype start,
 	sprintf(s, "%04d%02d%02d", y, m, d);
 	day = icaltime_from_string(s);
 	w = icaltime_day_of_week(day);
-	if (w == lastDay)
+	if (w == lastDay && d != 1)
 	{
-		printf("<tr>\n");
+		printf("</tr><tr>\n");
 	}
 
 	printf("<td");
 	if (do_today && icaltime_compare_date_only(day, now) == 0)
-	  printf(" id=today");
-	printf("><p class=date>%d\n\n", d);
+	  printf(" id=\"today\"");
+	printf("><p class=\"date\">%d</p>\n\n", d);
 
 	/* Print all events on this day (the events are sorted) */
 	for (; i < nrevents
 	       && icaltime_compare_date_only(events[i].start, day) == 0; i++)
 		print_event(events[i], do_description, do_location);
+	printf("</td>\n");
       }
 
-      printf("</table>\n\n");
+      printf("</tr></tbody></table>\n\n");
     }
 
   }

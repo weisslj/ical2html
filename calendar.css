@@ -69,16 +69,16 @@ div.vevent {
     text-indent: -0.6em}
 
 div.vevent {color: #666}		/* Default */
-p.Birthday {color: #C66}
-p.Birthday.Personal {color: #C93}
-p.Dinner {color: #090}
-p.Holiday {color: #393}
-p.Meeting {color: #990}
-p.Meeting.Phone-Call {color: #339}
-p.Miscellaneous {color: #960}
-p.Personal {color: #C60}
-p.Phone-Call {color: #909}
-p.Travel {color: #069}
+div.Birthday {color: #C66}
+div.Birthday.Personal {color: #C93}
+div.Dinner {color: #090}
+div.Holiday {color: #393}
+div.Meeting {color: #990}
+div.Meeting.Phone-Call {color: #339}
+div.Miscellaneous {color: #960}
+div.Personal {color: #C60}
+div.Phone-Call {color: #909}
+div.Travel {color: #069}
 
 span.categories {display: none}
 
