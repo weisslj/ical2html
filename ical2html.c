@@ -335,7 +335,7 @@ static void print_calendar(const struct icaltimetype start,
          skip = w-1;
 
       if (skip != 0) {
-         for(; skip > 0; skip--) printf("<td class=skip>\n");
+         for(; skip > 0; skip--) printf("<td class=skip>&nbsp;\n");
       }
 
       /* Skip events before this day (can only occur at very start) */
