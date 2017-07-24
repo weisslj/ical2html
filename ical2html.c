@@ -74,6 +74,8 @@ static const char *months[] = {"", "January", "February", "March", "April",
 typedef struct _event_item {
   struct icaltimetype start;
   struct icaltimetype end;
+  const char *uid;
+  struct icaltimetype recur_time;
   icalcomponent *event;
 } event_item;
 
@@ -101,6 +103,8 @@ static int compare_events(const void *aa, const void *bb)
 
   h = icaltime_compare(a->start, b->start);
   if (h == 0) h = icaltime_compare(a->end, b->end);
+  if (h == 0) h = strcmp(a->uid, b->uid);
+  if (h == 0) h = icaltime_compare(a->recur_time, b->recur_time);
   return h;
 }
 
@@ -354,6 +358,7 @@ static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
 			 icaltimezone *tz)
 {
   int n = (nrevents/INC + 1) * INC;
+  struct icaltimetype recur_time = icalcomponent_get_recurrenceid(ev);
 
   if (!(events = realloc(events, n * sizeof(*events))))
     fatal(ERR_OUT_OF_MEM, "Out of memory\n");
@@ -361,8 +366,27 @@ static void add_to_queue(icalcomponent *ev, const struct icaltimetype start,
 
   events[nrevents].start = icaltime_convert_to_zone(start, tz);
   events[nrevents].end = icaltime_convert_to_zone(end, tz);
+  events[nrevents].uid = icalcomponent_get_uid(ev);
+  events[nrevents].recur_time = icaltime_convert_to_zone(recur_time, tz);
   events[nrevents].event = ev;
   nrevents++;
+}
+
+/* filter_queue_recurring -- remove obsolete recurring events from queue */
+static void filter_queue_recurring(void)
+{
+  int i, j = 0;
+
+  for (i = 0; i < nrevents; i++) {
+    if (i < nrevents-1 &&
+	strcmp(events[i].uid, events[i+1].uid) == 0 &&
+	icaltime_compare(events[i].start, events[i+1].start) == 0 &&
+	icaltime_is_null_time(events[i].recur_time) &&
+	!icaltime_is_null_time(events[i+1].recur_time))
+      continue;
+    events[j++] = events[i];
+  }
+  nrevents = j;
 }
 
 
@@ -530,6 +554,9 @@ int main(int argc, char *argv[])
 
   /* Sort the result */
   qsort(events, nrevents, sizeof(*events), compare_events);
+
+  /* Filter out (later) updated recurring event occurrences */
+  filter_queue_recurring();
 
   /* Print the sorted results */
   print_header(periodstart, duration);
