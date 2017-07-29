@@ -146,6 +146,14 @@ int main(int argc, char *argv[])
 			       icalproperty_new_prodid(PRODID),
 			       0);
 
+  /* Iterate over VTIMEZONEs */
+  for (h = icalcomponent_get_first_component(comp, ICAL_VTIMEZONE_COMPONENT);
+       h; h = next) {
+    next = icalcomponent_get_next_component(comp, ICAL_VTIMEZONE_COMPONENT);
+    icalcomponent_remove_component(comp, h); /* Move from comp... */
+    icalcomponent_add_component(newset, h); /* ... to out */
+  }
+
   /* Iterate over VEVENTs */
   for (h = icalcomponent_get_first_component(comp, ICAL_VEVENT_COMPONENT);
        h; h = next) {

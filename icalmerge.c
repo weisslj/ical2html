@@ -183,12 +183,36 @@ static void merge(icalcomponent **a, icalcomponent *b)
   icalproperty *mod_a, *mod_b;
   struct icaltimetype modif_a, modif_b;
   icalproperty *uid;
+  icalproperty *tzid_prop;
+  const char *tzid;
   ENTRY *e, e1;
 
   /* Create the hash table */
   if (first_time) {
     if (! hcreate(10000)) fatal(ERR_HASH, "%s\n", strerror(errno));
     first_time = 0;
+  }
+
+  /* Iterate over VTIMEZONEs */
+  for (h = icalcomponent_get_first_component(b, ICAL_VTIMEZONE_COMPONENT);
+       h; h = next) {
+
+    next = icalcomponent_get_next_component(b, ICAL_VTIMEZONE_COMPONENT);
+
+    tzid_prop = icalcomponent_get_first_property(h, ICAL_TZID_PROPERTY);
+    if (!tzid_prop)
+      continue;
+
+    tzid = icalproperty_get_tzid(tzid_prop);
+    if (!tzid)
+      continue;
+
+    /* Skip existing TZIDs, should use icalcomponent_merge_component() instead. */
+    if (icalcomponent_get_timezone(*a, tzid))
+      continue;
+
+    icalcomponent_remove_component(b, h); /* Move from b... */
+    icalcomponent_add_component(*a, h); /* ... to a */
   }
 
   /* Iterate over VEVENTs */
